@@ -1,6 +1,6 @@
 ---
-- name: Local - NVM Install
-  hosts: "{{ target_hosts | default('local') }}"
+- name: UTH - NVM Install
+  hosts: "{{ target_hosts | default('uth') }}"
   gather_facts: true
   vars_files:
     - vars.yml

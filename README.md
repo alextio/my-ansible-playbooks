@@ -38,25 +38,51 @@ All remote servers are accessed via a jump host (`uth_jump`). Your `~/.ssh/confi
 | `git`    | Deploys `.gitconfig` | Local machine |
 | `vscode` | Deploys VSCode `settings.json` | Local machine |
 | `docker` | Sets up rootless Docker with NVIDIA GPU support | Remote servers |
-| `uv`     | Installs `uv` and Python tools (`yamllint`, `yamlfix`) | Local machine |
+| `uv`     | Installs `uv` and Python tools (`yamllint`, `yamlfix`) | Remote servers |
 | `go`     | Installs Go to `~/.local/go` | Remote servers |
-| `nodejs` | Installs NVM and Node.js | Local machine |
-| `claude` | Deploys global `~/.claude/CLAUDE.md` | Local machine |
+| `nodejs` | Installs NVM and Node.js | Remote servers |
+| `claude` | Deploys global `~/.claude/CLAUDE.md` | Remote servers |
 
 ## Prerequisites
 
 - Python 3 installed on your local machine
-- SSH access to the lab servers (ask your sysadmin for the jump host credentials)
+- SSH access to the lab servers 
 - Your SSH key added to each server's `~/.ssh/authorized_keys`
 
 ## Setup
 
 ### 1. Install Ansible
 
+**macOS / Linux**
+
 ```bash
 python3 -m pip install --user pipx
 pipx install --include-deps ansible
 ```
+
+**Windows (WSL2)**
+
+Ansible doesn't run natively on Windows, but works fine inside WSL2.
+
+1. Install WSL2 with Ubuntu (run in PowerShell as Administrator):
+
+   ```powershell
+   wsl --install
+   ```
+
+   Restart when prompted, then open the Ubuntu app to finish setup.
+
+2. Inside the WSL2 terminal, install Ansible:
+
+   ```bash
+   sudo apt update && sudo apt install -y pipx
+   pipx install --include-deps ansible
+   pipx ensurepath
+   ```
+
+   Then restart your WSL2 terminal (or `source ~/.bashrc`) so `ansible` is on your PATH.
+
+3. All subsequent commands in this README should be run from inside the WSL2 terminal.
 
 ### 2. Clone this repo
 

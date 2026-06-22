@@ -1,6 +1,6 @@
 ---
-- name: Localhost - Claude Setup
-  hosts: "{{ target_hosts | default('local') }}"
+- name: UTH - Claude Setup
+  hosts: "{{ target_hosts | default('uth') }}"
   gather_facts: true
   tasks:
     - name: Ensure ~/.claude directory exists

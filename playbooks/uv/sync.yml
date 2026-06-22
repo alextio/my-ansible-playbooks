@@ -1,7 +1,6 @@
 ---
-- name: Localhost - uv Setup
-  hosts: "{{ target_hosts | default('localhost') }}"
-  connection: local
+- name: UTH - uv Setup
+  hosts: "{{ target_hosts | default('uth') }}"
   gather_facts: false
   vars_files:
     - vars.yml
