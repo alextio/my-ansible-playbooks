@@ -8,6 +8,8 @@ When you SSH into four different servers (H100, A100, SuperMicro, Dell), each on
 
 This repo automates that. You edit a config file once, run one command, and every server stays in sync.
 
+![Before and after: manual SSH config vs Ansible automation](before-after.svg)
+
 ## What Is Ansible?
 
 Ansible is a tool that connects to remote machines over SSH and runs a set of instructions you define in YAML files called **playbooks**. You don't need to install anything on the remote servers — Ansible only needs to be installed on your local machine. It reads an **inventory** file to know which servers to target, then applies each playbook's tasks in order.
