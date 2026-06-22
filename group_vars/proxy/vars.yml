@@ -1,0 +1,4 @@
+---
+ansible_user: "{{ lookup('env', 'USER') }}"
+# No ProxyJump — proxy connects directly
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

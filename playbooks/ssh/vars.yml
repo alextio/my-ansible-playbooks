@@ -1,0 +1,4 @@
+---
+ssh_key_path: "~/.ssh/id_ed25519"
+ssh_key_type: "ed25519"
+ssh_key_comment: "{{ lookup('env', 'USER') }}@ansible-managed"
