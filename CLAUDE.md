@@ -15,14 +15,14 @@ This repo uses Ansible to sync a standardized development environment across rem
 Current playbooks:
 - `playbooks/bash/sync.yml` — deploys bash config files to `[uth]` hosts
 - `playbooks/ssh/sync.yml` — deploys SSH config to `localhost`
-- `playbooks/uv/sync.yml` — installs uv and uv tools (yamllint, yamlfix) on `localhost`
+- `playbooks/uv/sync.yml` — installs uv and uv tools (yamllint, yamlfix) on `[uth]` hosts
 - `playbooks/vscode/sync.yml` — deploys VSCode settings to `localhost`
 - `playbooks/git/sync.yml` — deploys `.gitconfig` to `localhost`
 - `playbooks/zsh/sync.yml` — deploys Zsh config to `[local]` hosts (macOS)
 
-- `playbooks/claude/sync.yml` — deploys global `~/.claude/CLAUDE.md` to `[local]` hosts
+- `playbooks/claude/sync.yml` — deploys global `~/.claude/CLAUDE.md` to `[uth]` hosts
 - `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; requires `become: true` for package install and nvidia-ctk system config
-- `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[local]` hosts; optionally installs Node.js versions and sets a default
+- `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[uth]` hosts; optionally installs Node.js versions and sets a default
 - `playbooks/go/sync.yml` — installs Go to `~/.local/go`; adds `~/.local/go/bin` to PATH in `.zshrc` (macOS) or `.bashrc` (Linux); version pinned in `vars.yml`
 
 Planned: `playbooks/vim/`
