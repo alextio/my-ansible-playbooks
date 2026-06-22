@@ -1,0 +1,61 @@
+# Standardized SSH Config - Managed by Ansible
+# Key rules: Start with most specific, end with most generic
+# Manual changes may be overwritten!
+
+# Jump hosts — make sure these come first so later entries can reference them
+{% for host in groups['proxy'] %}
+Host {{ host }}
+    HostName {{ hostvars[host]['ansible_host'] }}
+{% if hostvars[host]['ansible_user'] is defined %}
+    User {{ hostvars[host]['ansible_user'] }}
+{% endif %}
+{% if hostvars[host]['LogLevel'] is defined %}
+    LogLevel {{ hostvars[host]['LogLevel'] }}
+{% endif %}
+{% endfor %}
+
+# --- Dynamic Host Entries ---
+{% for host in groups['REMOTE_SERVERS'] %}
+{% if host not in groups['proxy'] %}
+Host {{ host }}
+    HostName {{ hostvars[host]['ansible_host'] }}
+    User {{ hostvars[host]['ansible_user'] }}
+{% if hostvars[host]['ProxyJump'] is defined %}
+    ProxyJump {{ hostvars[host]['ProxyJump'] }}
+{% endif %}
+{% if hostvars[host]['IdentityFile'] is defined %}
+    IdentityFile {{ hostvars[host]['IdentityFile'] }}
+{% endif %}
+{% for port in hostvars[host]['LocalForward'] | default([]) %}
+    LocalForward {{ port }} localhost:{{ port }}
+{% endfor %}
+{# Only attach tmux if this is an interactive login (prevents breaking Ansible) #}
+    Match exec "test -z '$SSH_ORIGINAL_COMMAND'"
+        RemoteCommand tmux new -A -s main
+        RequestTTY yes
+{% endif %}
+{% endfor %}
+
+
+# --- remote git servers ---
+Host codeberg
+  HostName codeberg.org
+  User git
+  IdentityFile ~/.ssh/id_ed25519
+
+Host gitpapl1.uth.tmc.edu
+  Hostname gitpapl1.uth.tmc.edu
+  User git
+  IdentityFile ~/.ssh/id_ed25519
+
+# --- catch all ---
+Host *
+    StrictHostKeyChecking accept-new
+
+    AddKeysToAgent yes
+    IdentityFile ~/.ssh/id_ed25519
+
+    # Keep SSH connection open so future Ansible tasks don't trigger new connections
+    ControlMaster auto
+    ControlPath ~/.ssh/ansible-%r@%h:%p
+    ControlPersist 60s

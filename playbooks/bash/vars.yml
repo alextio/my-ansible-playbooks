@@ -1,0 +1,3 @@
+---
+ssh_private_keys:
+  - ~/.ssh/git_id_ed25519

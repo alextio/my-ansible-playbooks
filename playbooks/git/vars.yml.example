@@ -1,0 +1,13 @@
+---
+git_user_name: <YOUR_NAME>
+git_user_email: <YOUR_EMAIL>
+git_default_branch: main
+git_editor: vim
+git_pull_rebase: true
+git_credential_helper: "{% if ansible_system == 'Darwin' %}osxkeychain{% elif ansible_system == 'Win32NT' %}manager{% else %}store{% endif %}"
+git_aliases:
+  st: status
+  co: checkout
+  br: branch
+  lg: "log --oneline --graph --decorate --all"
+  undo-commit: "reset --soft HEAD~1"

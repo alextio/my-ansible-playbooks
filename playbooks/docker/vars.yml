@@ -1,0 +1,24 @@
+---
+docker_rootless_prerequisites:
+  - uidmap
+  - dbus-user-session
+  - fuse-overlayfs
+  - slirp4netns
+  - docker-ce-rootless-extras
+
+nvidia_ctk_gpg_key_path: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+nvidia_ctk_apt_list_path: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+nvidia_ctk_daemon_config: "{{ ansible_env.HOME }}/.config/docker/daemon.json"
+
+docker_rootless_path:
+  - /usr/bin
+  - /sbin
+  - /usr/sbin
+  - /usr/local/cuda/bin
+  - /opt/bin
+  - /usr/local/sbin
+  - /usr/local/bin
+  - /usr/games
+  - /usr/local/games
+  - /snap/bin
+  - /bin

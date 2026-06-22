@@ -1,0 +1,61 @@
+{
+    "terminal.integrated.enableMultiLinePasteWarning": "never",
+    "update.mode": "start",
+    "editor.minimap.enabled": false,
+    "explorer.confirmDragAndDrop": false,
+    "github.copilot.enable": {
+        "*": false,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    },
+    "workbench.editorAssociations": {
+        "*.copilotmd": "vscode.markdown.preview.editor",
+        "*.xlsx": "xlsxViewer.xlsx",
+        "*.db": "sqlite3-editor.editor"
+    },
+    "files.watcherExclude": {
+        "**/.pytest_cache/**": true,
+        "**/.venv/**": true
+    },
+    "[plaintext]": {
+        "editor.wordWrap": "on"
+    },
+    "claudeCode.preferredLocation": "panel",
+    "explorer.fileNesting.patterns": {
+        "*.ts": "${capture}.js",
+        "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+        "*.jsx": "${capture}.js",
+        "*.tsx": "${capture}.ts",
+        "tsconfig.json": "tsconfig.*.json",
+        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
+        "*.sqlite": "${capture}.${extname}-*",
+        "*.db": "${capture}.${extname}-*",
+        "*.sqlite3": "${capture}.${extname}-*",
+        "*.db3": "${capture}.${extname}-*",
+        "*.sdb": "${capture}.${extname}-*",
+        "*.s3db": "${capture}.${extname}-*"
+    },
+    "claudeCode.enableNewConversationShortcut": true,
+    "files.associations": {
+        "*.j2": "jinja"
+    },
+    "[jinja]": {
+        "editor.defaultFormatter": "monosans.djlint",
+        "editor.formatOnSave": true
+    },
+    "explorer.autoReveal": "focusNoScroll",
+    "git.autofetch": true,
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "args": [],
+        }
+    },
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.enablePersistentSessions": true,
+    "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
+    "extensions.ignoreRecommendations": true,
+    "git.confirmSync": false,
+    "python.analysis.typeCheckingMode": "standard"
+}

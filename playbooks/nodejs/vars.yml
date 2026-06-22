@@ -1,0 +1,7 @@
+---
+nvm_version: "v0.40.3"
+node_versions:
+  - "lts/*"
+node_default_version: "lts/*"
+global_npm_packages:
+  - "@devcontainers/cli"

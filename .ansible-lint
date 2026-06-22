@@ -1,0 +1,9 @@
+profile: moderate
+
+exclude_paths:
+  - .git/
+  - .vault_pass
+
+warn_list:
+  - experimental
+  - yaml[line-length]

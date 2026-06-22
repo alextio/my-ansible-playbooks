@@ -1,0 +1,27 @@
+---
+- name: Localhost - uv Setup
+  hosts: "{{ target_hosts | default('localhost') }}"
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Check if uv is installed
+      ansible.builtin.command: which uv
+      register: uv_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install uv
+      ansible.builtin.shell:
+        cmd: curl -LsSf https://astral.sh/uv/install.sh | sh
+      when: uv_check.rc != 0
+
+    - name: Install uv tools
+      ansible.builtin.command: uv tool install {{ item }}
+      loop: "{{ uv_tools }}"
+      register: uv_tool_install
+      changed_when: "'Installed' in uv_tool_install.stdout"
+      failed_when:
+        - uv_tool_install.rc != 0
+        - "'already installed' not in uv_tool_install.stderr"

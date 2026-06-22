@@ -1,0 +1,17 @@
+---
+- name: Localhost - Claude Setup
+  hosts: "{{ target_hosts | default('local') }}"
+  gather_facts: true
+  tasks:
+    - name: Ensure ~/.claude directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.claude"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy global CLAUDE.md
+      ansible.builtin.template:
+        src: templates/CLAUDE.md.j2
+        dest: "{{ ansible_env.HOME }}/.claude/CLAUDE.md"
+        mode: "0644"
+        backup: true

@@ -1,0 +1,40 @@
+---
+- name: Localhost - Git Configuration
+  hosts: "{{ target_hosts | default('REMOTE_SERVERS') }}"
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Deploy .gitconfig
+      ansible.builtin.template:
+        src: templates/.gitconfig.j2
+        dest: "~/.gitconfig"
+        mode: "0644"
+        backup: true
+
+    - name: Find git hook directories
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/hooks"
+        file_type: directory
+      register: git_hook_dirs
+      delegate_to: localhost
+
+    - name: Create global git hooks directory
+      ansible.builtin.file:
+        path: ~/.config/git/hooks
+        state: directory
+        mode: "0755"
+
+    - name: Assemble and deploy git hooks
+      ansible.builtin.assemble:
+        src: "{{ item.path }}"
+        dest: "~/.config/git/hooks/{{ item.path | basename }}"
+        mode: "0755"
+        backup: true
+      loop: "{{ git_hook_dirs.files }}"
+
+    - name: Store GitLab token in git credential store
+      ansible.builtin.shell: |
+        printf 'protocol=https\nhost=gitpapl1.uth.tmc.edu\nusername=oauth2\npassword=%s\n' '{{ vault_gitlab_token }}' | git credential approve
+      no_log: true
+      changed_when: false

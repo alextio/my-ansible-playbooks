@@ -1,0 +1,2 @@
+# Ensure SSH login shells also execute ~/.bashrc
+[[ -f ~/{{ rc_file | default('.bashrc') }} ]] && . ~/{{ rc_file | default('.bashrc') }}

@@ -1,0 +1,4 @@
+---
+# username of the user running the playbook
+current_username: "{{ lookup('env', 'USER')}}"
+

@@ -1,0 +1,78 @@
+---
+- name: Install Go
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  vars:
+    go_os: "{{ ansible_system | lower }}"
+    go_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+    go_archive: "go{{ go_version }}.{{ go_os }}-{{ go_arch }}.tar.gz"
+    go_download_url: "https://go.dev/dl/{{ go_archive }}"
+    go_install_dir: "{{ ansible_env.HOME }}/.local/go"
+  tasks:
+    - name: Get current Go version
+      ansible.builtin.command: "{{ go_install_dir }}/bin/go version"
+      register: go_current_version
+      changed_when: false
+      failed_when: false
+
+    - name: Set install flag
+      ansible.builtin.set_fact:
+        go_needs_install: >-
+          {{ go_current_version.rc != 0 or
+             'go' + go_version not in go_current_version.stdout }}
+
+    - name: Download Go {{ go_version }}
+      ansible.builtin.get_url:
+        url: "{{ go_download_url }}"
+        dest: "/tmp/{{ go_archive }}"
+        mode: "0644"
+      when: go_needs_install
+
+    - name: Remove existing Go installation
+      ansible.builtin.file:
+        path: "{{ go_install_dir }}"
+        state: absent
+      when: go_needs_install
+
+    - name: Ensure install parent directory exists
+      ansible.builtin.file:
+        path: "{{ go_install_dir | dirname }}"
+        state: directory
+        mode: "0755"
+      when: go_needs_install
+
+    - name: Extract Go {{ go_version }}
+      ansible.builtin.command:
+        cmd: "tar xzf /tmp/{{ go_archive }} -C {{ go_install_dir | dirname }}"
+      changed_when: true
+      when: go_needs_install
+
+    - name: Clean up archive
+      ansible.builtin.file:
+        path: "/tmp/{{ go_archive }}"
+        state: absent
+      when: go_needs_install
+
+    - name: Add Go bin to PATH in .bashrc
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        line: "export PATH=$PATH:{{ go_install_dir }}/bin"
+        backup: yes
+      when: ansible_system in ['Linux', 'Darwin']
+
+    - name: Add Go bin to PATH in .zshrc
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        line: "export PATH=$PATH:{{ go_install_dir }}/bin"
+        backup: yes
+      when: ansible_system in ['Linux', 'Darwin']
+
+    - name: Add Go bin to PATH in PowerShell profile (Windows)
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_env.HOME }}/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
+        line: "$env:PATH += ';{{ go_install_dir }}/bin'"
+        create: yes
+        backup: yes
+      when: ansible_system == 'Win32NT'

@@ -1,0 +1,29 @@
+[
+    {
+        "key": "shift+enter",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": {
+            "text": "\u001b\r"
+        },
+        "when": "terminalFocus"
+    },
+    {
+        "key": "cmd+k cmd+m",
+        "command": "workbench.action.toggleMaximizedPanel",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "cmd+shift+e",
+        "command": "workbench.action.toggleSidebarVisibility",
+        "when": "viewContainer.workbench.view.explorer.enabled && explorerViewletFocus"
+    },
+    {
+        "key": "cmd+shift+g",
+        "command": "workbench.view.scm"
+    },
+    {
+        "key": "cmd+o",
+        "command": "vscode.openFolder"
+    },
+
+]

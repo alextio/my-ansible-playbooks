@@ -1,0 +1,17 @@
+---
+- name: Localhost - SSH Setup
+  hosts: "{{ target_hosts | default('localhost') }}"
+  gather_facts: true
+  tasks:
+    - name: Create local SSH directory
+      ansible.builtin.file:
+        path: ~/.ssh
+        state: directory
+        mode: "0700"
+
+    - name: Deploy standardized local SSH config
+      ansible.builtin.template:
+        src: templates/ssh_config.j2
+        dest: ~/.ssh/config
+        mode: "0600"
+        backup: true

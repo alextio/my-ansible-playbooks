@@ -1,0 +1,50 @@
+# Git Commit Message Conventions
+
+Follow the Conventional Commits format:
+
+```
+<type>(<scope>): <short summary>
+
+<optional body>
+
+<optional footer>
+```
+
+## Types
+
+- ✨ `feat` — new feature
+- 🐛 `fix` — bug fix
+- ♻️ `refactor` — code change that isn't a fix or feature
+- 📝 `docs` — documentation only
+- 🧪 `test` — adding or updating tests
+- 🔧 `chore` — build process, tooling, dependencies
+- ⚡️ `perf` — performance improvement
+- 👷 `ci` — CI/CD changes
+- 🚧 `wip` — work in progress
+
+## Summary line rules
+
+- Imperative mood: "add login page" not "added login page"
+- No period at the end
+- 50 characters or fewer (hard limit: 72)
+- Lowercase after the colon
+
+## Body
+
+- Wrap at 72 characters
+- Explain **why**, not what — the diff shows what changed
+- Separate from summary with a blank line
+
+## Examples
+
+```
+✨ feat(auth): add OAuth2 login support
+
+🐛 fix(bash): resolve PATH not exported in non-login shells
+
+♻️ refactor(vscode): extract keybindings into separate template
+```
+
+## No sudo access
+
+Assume Docker runs in **rootless mode**. There is no `sudo` access. Do not use `sudo` in any commands or suggest commands that require root privileges.

@@ -1,0 +1,5 @@
+---
+uv_tools:
+  - yamllint
+  - yamlfix
+  - djlint

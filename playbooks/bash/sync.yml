@@ -1,0 +1,30 @@
+---
+- name: Ubuntu - Bash Configuration
+  hosts: "{{ target_hosts | default('REMOTE_SERVERS') }}"
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Deploy Bash configuration bundle
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: ~/{{ item.dest }}
+        mode: "0644"
+        backup: true
+      loop:
+        - { src: .bashrc.j2, dest: .bashrc }
+        - { src: .bash_profile.j2, dest: .bash_profile }
+        - { src: .bash_aliases.j2, dest: .bash_aliases }
+
+    - name: Ensure ~/.local/scripts exists
+      ansible.builtin.file:
+        path: "~/.local/scripts"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy bash helper scripts
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "~/.local/scripts/{{ item | basename }}"
+        mode: "0755"
+        backup: true
+      with_fileglob: "scripts/*.sh"
