@@ -1,6 +1,6 @@
 ---
 - name: Localhost - SSH Setup
-  hosts: localhost
+  hosts: "{{ target_hosts | default('localhost') }}"
   gather_facts: true
   vars_files:
     - vars.yml
