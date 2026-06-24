@@ -7,17 +7,12 @@
   tasks:
     - name: Check if rootless Docker is installed
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/bin/dockerd-rootless.sh"
+        path: "{{ ansible_facts['env']['HOME'] }}/bin/dockerd-rootless.sh"
       register: dockerd_rootless_stat
-
-    - name: Install rootless Docker
-      ansible.builtin.command: dockerd-rootless-setuptool.sh install
-      when: not dockerd_rootless_stat.stat.exists
-      changed_when: true
 
     - name: Ensure Docker user config directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/docker"
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/docker"
         state: directory
         mode: "0755"
 
@@ -30,14 +25,14 @@
 
     - name: Ensure user systemd directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
         state: directory
         mode: "0755"
 
     - name: Deploy docker user systemd unit file
       ansible.builtin.template:
         src: "templates/docker.service.j2"
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/docker.service"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/docker.service"
         mode: "0644"
         backup: true
       notify: Reload user systemd daemon

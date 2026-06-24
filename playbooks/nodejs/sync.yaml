@@ -7,7 +7,7 @@
   tasks:
     - name: Check if NVM is installed
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+        path: "{{ ansible_facts['env']['HOME'] }}/.nvm/nvm.sh"
       register: nvm_stat
 
     - name: Install NVM {{ nvm_version }}
@@ -18,7 +18,7 @@
     - name: Install Node.js versions
       ansible.builtin.shell:
         cmd: |
-          export NVM_DIR="{{ ansible_env.HOME }}/.nvm"
+          export NVM_DIR="{{ ansible_facts['env']['HOME'] }}/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install {{ item }}
       loop: "{{ node_versions }}"
@@ -29,7 +29,7 @@
     - name: Set default Node.js version
       ansible.builtin.shell:
         cmd: |
-          export NVM_DIR="{{ ansible_env.HOME }}/.nvm"
+          export NVM_DIR="{{ ansible_facts['env']['HOME'] }}/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm alias default {{ node_default_version }}
       when: node_default_version | length > 0
@@ -37,7 +37,7 @@
     - name: Install global npm packages
       ansible.builtin.shell:
         cmd: |
-          export NVM_DIR="{{ ansible_env.HOME }}/.nvm"
+          export NVM_DIR="{{ ansible_facts['env']['HOME'] }}/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           npm install -g {{ item }}
       loop: "{{ global_npm_packages }}"

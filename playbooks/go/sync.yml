@@ -9,7 +9,7 @@
     go_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
     go_archive: "go{{ go_version }}.{{ go_os }}-{{ go_arch }}.tar.gz"
     go_download_url: "https://go.dev/dl/{{ go_archive }}"
-    go_install_dir: "{{ ansible_env.HOME }}/.local/go"
+    go_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/go"
   tasks:
     - name: Get current Go version
       ansible.builtin.command: "{{ go_install_dir }}/bin/go version"
@@ -57,21 +57,21 @@
 
     - name: Add Go bin to PATH in .bashrc
       ansible.builtin.lineinfile:
-        path: "{{ ansible_env.HOME }}/.bashrc"
+        path: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
         line: "export PATH=$PATH:{{ go_install_dir }}/bin"
         backup: yes
-      when: ansible_system in ['Linux', 'Darwin']
+      when: ansible_system == 'Linux'
 
     - name: Add Go bin to PATH in .zshrc
       ansible.builtin.lineinfile:
-        path: "{{ ansible_env.HOME }}/.zshrc"
+        path: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
         line: "export PATH=$PATH:{{ go_install_dir }}/bin"
         backup: yes
-      when: ansible_system in ['Linux', 'Darwin']
+      when: ansible_system == 'Darwin'
 
     - name: Add Go bin to PATH in PowerShell profile (Windows)
       ansible.builtin.lineinfile:
-        path: "{{ ansible_env.HOME }}/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
+        path: "{{ ansible_facts['env']['HOME'] }}/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
         line: "$env:PATH += ';{{ go_install_dir }}/bin'"
         create: yes
         backup: yes
