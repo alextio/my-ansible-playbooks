@@ -1,6 +1,6 @@
 ---
 - name: Ubuntu - Bash Configuration
-  hosts: "{{ target_hosts | default('REMOTE_SERVERS') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   vars_files:
     - vars.yml
   tasks:
