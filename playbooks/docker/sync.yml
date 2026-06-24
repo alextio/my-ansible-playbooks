@@ -1,6 +1,6 @@
 ---
 - name: Ubuntu - Rootless Docker with NVIDIA GPU Setup
-  hosts: "{{ target_hosts | default('uth') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   gather_facts: true
   vars_files:
     - vars.yml
@@ -9,37 +9,6 @@
       ansible.builtin.stat:
         path: "{{ ansible_env.HOME }}/bin/dockerd-rootless.sh"
       register: dockerd_rootless_stat
-
-    - name: Install rootless Docker prerequisites
-      ansible.builtin.apt:
-        name: "{{ docker_rootless_prerequisites }}"
-        state: present
-        update_cache: true
-      become: true
-
-    - name: Install NVIDIA container toolkit GPG key
-      ansible.builtin.shell:
-        cmd: >
-          curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey |
-          gpg --dearmor -o {{ nvidia_ctk_gpg_key_path }}
-        creates: "{{ nvidia_ctk_gpg_key_path }}"
-      become: true
-
-    - name: Add NVIDIA container toolkit apt repository
-      ansible.builtin.shell:
-        cmd: >
-          curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |
-          sed 's#deb https://#deb [signed-by={{ nvidia_ctk_gpg_key_path }}] https://#g' |
-          tee {{ nvidia_ctk_apt_list_path }}
-        creates: "{{ nvidia_ctk_apt_list_path }}"
-      become: true
-
-    - name: Install NVIDIA container toolkit
-      ansible.builtin.apt:
-        name: nvidia-container-toolkit
-        state: present
-        update_cache: true
-      become: true
 
     - name: Install rootless Docker
       ansible.builtin.command: dockerd-rootless-setuptool.sh install
@@ -57,11 +26,6 @@
         nvidia-ctk runtime configure
         --runtime=docker
         --config={{ nvidia_ctk_daemon_config }}
-      changed_when: true
-
-    - name: Disable cgroups for NVIDIA container CLI (required for rootless)
-      ansible.builtin.command: nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
-      become: true
       changed_when: true
 
     - name: Ensure user systemd directory exists
