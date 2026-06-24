@@ -21,7 +21,7 @@ Current playbooks:
 - `playbooks/zsh/sync.yml` — deploys Zsh config to `[local]` hosts (macOS)
 
 - `playbooks/claude/sync.yml` — deploys global `~/.claude/CLAUDE.md` to `[uth]` hosts
-- `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; requires `become: true` for package install and nvidia-ctk system config
+- `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[uth]` hosts; optionally installs Node.js versions and sets a default
 - `playbooks/go/sync.yml` — installs Go to `~/.local/go`; adds `~/.local/go/bin` to PATH in `.zshrc` (macOS) or `.bashrc` (Linux); version pinned in `vars.yml`
 
@@ -52,8 +52,8 @@ Never define group variables in the `.ini` inventory file (e.g. `[uth:vars]`). A
   ```
 - When modifying PATH (e.g. via `lineinfile`), always cover all three shells: bash (`~/.bashrc`), zsh (`~/.zshrc`), and PowerShell (`$PROFILE`). Use separate tasks conditioned on the appropriate OS/shell.
 - `backup: yes`
-- `hosts` should have `target_hosts`. If I specify a group, set it as the default value alongside `target_hosts`. Never default to `localhost`.
-- Never include `connection: local` in playbooks.
+- `hosts` should have `target_hosts`. If I specify a group, set it as the default value alongside `target_hosts`. Default to `uth` unless the playbook is explicitly localhost-only (e.g. `playbooks/vscode/sync.yml`).
+- Never include `connection: local` in playbooks, **except** `playbooks/vscode/sync.yml` which is localhost-only and requires it.
 - Decouple parameters with a high probable of being manually edited by the user (e.g., list of packages to install) into a variable in an accompanying `vars.yml`.
 - Any generated config files should go into a `templates` subdirectory as a jinja2 file.
 - This is a personal repo — `group_vars/**/vars.yml` files are committed directly. No `.example` counterparts needed.
