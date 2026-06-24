@@ -1,6 +1,6 @@
 ---
 - name: UTH - Claude Setup
-  hosts: "{{ target_hosts | default('uth') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   gather_facts: true
   tasks:
     - name: Ensure ~/.claude directory exists
