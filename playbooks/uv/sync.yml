@@ -1,6 +1,6 @@
 ---
 - name: UTH - uv Setup
-  hosts: "{{ target_hosts | default('uth') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   gather_facts: false
   vars_files:
     - vars.yml
