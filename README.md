@@ -89,20 +89,7 @@ git clone <repo-url>
 cd uth-ansible-playbooks
 ```
 
-### 3. Configure the vault password
-
-Sensitive values (server IPs, tokens, etc.) are encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) (AES-256). You need a password file to decrypt them at runtime.
-
-Ask the repo owner for the vault password, then write it to `.vault_pass`:
-
-```bash
-echo "the-password-you-were-given" > .vault_pass
-chmod 600 .vault_pass
-```
-
-`.vault_pass` is gitignored. Never commit it. The `ansible.cfg` in this repo is already configured to pick it up automatically, so you won't need to pass `--vault-password-file` manually.
-
-### 4. Verify connectivity
+### 3. Verify connectivity
 
 ```bash
 ansible all -m ping
@@ -160,15 +147,13 @@ ansible-playbook playbooks/bash/sync.yml -l h100,a100
 ```
 .
 ├── inventory.ini          # Which servers exist and how to reach them
-├── ansible.cfg            # Ansible defaults (vault path, SSH args, etc.)
+├── ansible.cfg            # Ansible defaults (SSH args, etc.)
 ├── run-all-playbooks.sh   # Runs every playbook in order
 ├── group_vars/
 │   ├── all/
-│   │   ├── vars.yml       # Variables shared across all hosts
-│   │   └── vault.yml      # Encrypted secrets shared across all hosts
+│   │   └── vars.yml       # Variables shared across all hosts
 │   └── uth/
-│       ├── vars.yml       # Variables for the remote [uth] server group
-│       └── vault.yml      # Encrypted secrets for [uth] servers
+│       └── vars.yml       # Variables for the remote [uth] server group
 ├── playbooks/
 │   └── <tool>/
 │       ├── sync.yml       # Entry point — run this to apply the config
@@ -177,37 +162,6 @@ ansible-playbook playbooks/bash/sync.yml -l h100,a100
 └── tasks/
     └── backup_file.yml    # Shared task: back up a file before overwriting it
 ```
-
-## Secrets and Ansible Vault
-
-Sensitive values (IPs, tokens, passwords) live in `group_vars/**/vault.yml` files, encrypted with AES-256. Ansible decrypts them automatically at runtime using `.vault_pass`.
-
-### Edit an existing vault file
-
-```bash
-ansible-vault edit group_vars/uth/vault.yml
-```
-
-### View a vault file without editing
-
-```bash
-ansible-vault view group_vars/all/vault.yml
-```
-
-### Encrypt a new file
-
-```bash
-ansible-vault encrypt group_vars/all/vault.yml
-```
-
-### Add a new secret
-
-1. Open the vault file: `ansible-vault edit group_vars/uth/vault.yml`
-2. Add your variable: `vault_my_secret: "value"`
-3. Reference it in `vars.yml`: `my_secret: "{{ vault_my_secret }}"`
-4. Use it in your playbook: `"{{ my_secret }}"`
-
-The `vault_` prefix on raw secret variables is a convention that makes it easy to tell encrypted values from plain ones.
 
 ## Adding a New Tool
 
@@ -230,4 +184,4 @@ Your SSH key isn't on the remote server. Either add it via `ssh-copy-id` or ask 
 The playbooks use `backup: yes` on file modifications, so the original file is saved alongside the new one with a timestamp suffix. Find it with `ls -la ~/<config-file>*` on the affected server.
 
 **"Variable is undefined"**
-A variable referenced in a playbook is missing from `vars.yml` or `group_vars/`. Check the playbook's `vars.yml` and the relevant `group_vars/<group>/vars.yml`.
+A variable referenced in a playbook is missing. Check the playbook's `vars.yml` and `group_vars/<group>/vars.yml`.
