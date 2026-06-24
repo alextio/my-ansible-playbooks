@@ -1,6 +1,6 @@
 ---
 - name: UTH - NVM Install
-  hosts: "{{ target_hosts | default('uth') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   gather_facts: true
   vars_files:
     - vars.yml
