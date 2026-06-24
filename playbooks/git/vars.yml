@@ -1,6 +1,7 @@
 ---
-git_user_name: "{{ vault_git_username }}"
-git_user_email: "{{ vault_git_email }}"
+git_user_name_default: ""
+git_user_email_default: ""
+git_gitlab_url: "gitpapl1.uth.tmc.edu"
 git_default_branch: main
 git_editor: vim
 git_pull_rebase: true

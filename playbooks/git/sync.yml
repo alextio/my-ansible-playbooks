@@ -1,9 +1,32 @@
 ---
 - name: Localhost - Git Configuration
-  hosts: "{{ target_hosts | default('REMOTE_SERVERS') }}"
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
   gather_facts: true
   vars_files:
     - vars.yml
+  vars_prompt:
+    - name: gitlab_token_input
+      prompt: "GitLab HTTPS access token (leave blank to skip)"
+      private: false
+      default: ""
+  pre_tasks:
+    - name: Get current git user name
+      ansible.builtin.command: git config --global user.name
+      register: current_git_name
+      changed_when: false
+      failed_when: false
+
+    - name: Get current git user email
+      ansible.builtin.command: git config --global user.email
+      register: current_git_email
+      changed_when: false
+      failed_when: false
+
+    - name: Set git user facts
+      ansible.builtin.set_fact:
+        git_user_name: "{{ current_git_name.stdout | default(git_user_name_default, true) }}"
+        git_user_email: "{{ current_git_email.stdout | default(git_user_email_default, true) }}"
+
   tasks:
     - name: Deploy .gitconfig
       ansible.builtin.template:
@@ -33,8 +56,17 @@
         backup: true
       loop: "{{ git_hook_dirs.files }}"
 
+    - name: Validate GitLab access token
+      ansible.builtin.uri:
+        url: "https://{{ git_gitlab_url }}/api/v4/personal_access_tokens/self"
+        headers:
+          PRIVATE-TOKEN: "{{ gitlab_token_input | default(vault_gitlab_token, true) }}"
+        status_code: 200
+      no_log: true
+      when: gitlab_token_input | length > 0
+
     - name: Store GitLab token in git credential store
       ansible.builtin.shell: |
-        printf 'protocol=https\nhost=gitpapl1.uth.tmc.edu\nusername=oauth2\npassword=%s\n' '{{ vault_gitlab_token }}' | git credential approve
+        printf 'protocol=https\nhost={{ git_gitlab_url }}\nusername=oauth2\npassword=%s\n' '{{ gitlab_token_input | default(vault_gitlab_token, true) }}' | git credential approve
       no_log: true
       changed_when: false
