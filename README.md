@@ -1,8 +1,8 @@
-# Dev Environment Sync
+# Sync Your Environments Easily with Ansible
 
 Ansible playbooks to keep your development environment — shell config, VSCode settings, Git config, Docker, SSH, and more — in sync across the lab's GPU servers and your local machine.
 
-## The Problem This Solves
+## The Problem 
 
 When you SSH into four different servers (H100, A100, SuperMicro, Dell), each one can feel like a slightly different machine: your `.bashrc` aliases aren't there, Git uses the wrong email, your VSCode extensions aren't configured, Docker isn't set up the way you need it. Manually copying config files across servers is tedious and error-prone.
 
@@ -12,9 +12,8 @@ This repo automates that. You edit a config file once, run one command, and ever
 
 ## What Is Ansible?
 
-Ansible is a tool that connects to remote machines over SSH and runs a set of instructions you define in YAML files called **playbooks**. You don't need to install anything on the remote servers — Ansible only needs to be installed on your local machine. It reads an **inventory** file to know which servers to target, then applies each playbook's tasks in order.
+Ansible is an open-source tool that automates the tedious task of keeping environments across remote hosts and servers in sync. You don't need to install anything on the remote servers — Ansible only needs to be installed on your machine from where you will call it.
 
-Think of it like a "git push, but for your config files and system settings."
 
 ## Servers This Manages
 
@@ -24,9 +23,9 @@ Think of it like a "git push, but for your config files and system settings."
 | `a100`  | A100 GPU node  | Remote server |
 | `sm`    | SuperMicro node | Remote server |
 | `dell`  | Dell node       | Remote server |
-| `localhost` | Your Mac   | Local machine |
+| `localhost` | Your local machine | Local machine |
 
-All remote servers are accessed via a jump host (`uth_jump`). Your `~/.ssh/config` handles the connection details; Ansible just piggybacks on it.
+All server details which Ansible uses are stored in `inventory.ini` 
 
 ## What Gets Synced
 
@@ -47,7 +46,6 @@ All remote servers are accessed via a jump host (`uth_jump`). Your `~/.ssh/confi
 
 - Python 3 installed on your local machine
 - SSH access to the lab servers 
-- Your SSH key added to each server's `~/.ssh/authorized_keys`
 
 ## Setup
 
