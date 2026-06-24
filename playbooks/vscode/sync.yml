@@ -5,14 +5,15 @@
   gather_facts: true
   tasks:
     - name: Deploy VSCode settings
-      ansible.builtin.template:
-        src: templates/settings.json.j2
-        dest: "{{ ansible_env.HOME }}/Library/Application Support/Code/User/settings.json"
+      ansible.builtin.copy:
+        src: templates/settings.json
+        dest: "{{ ansible_facts['env']['HOME'] }}/Library/Application Support/Code/User/settings.json"
         mode: "0644"
         backup: true
 
-    - name: Symlink VSCode keybindings
-      ansible.builtin.file:
-        src: "{{ playbook_dir }}/templates/keybindings.json"
-        dest: "{{ ansible_env.HOME }}/Library/Application Support/Code/User/keybindings.json"
-        state: link
+    - name: Deploy VSCode keybindings
+      ansible.builtin.copy:
+        src: templates/keybindings.json
+        dest: "{{ ansible_facts['env']['HOME'] }}/Library/Application Support/Code/User/keybindings.json"
+        mode: "0644"
+        backup: true
