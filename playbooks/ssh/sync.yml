@@ -17,29 +17,3 @@
         dest: ~/.ssh/config
         mode: "0600"
         backup: true
-
-    - name: Generate SSH keypair
-      community.crypto.openssh_keypair:
-        path: "{{ ssh_key_path }}"
-        type: "{{ ssh_key_type }}"
-        comment: "{{ ssh_key_comment }}"
-        state: present
-      register: keypair
-
-- name: Remote hosts - Authorize SSH public key
-  hosts: "{{ target_hosts | default('REMOTE_SERVERS') }}"
-  gather_facts: false
-  vars_files:
-    - vars.yml
-  tasks:
-    - name: Ensure ~/.ssh directory exists
-      ansible.builtin.file:
-        path: ~/.ssh
-        state: directory
-        mode: "0700"
-
-    - name: Add public key to authorized_keys
-      ansible.posix.authorized_key:
-        user: "{{ ansible_user }}"
-        key: "{{ hostvars['localhost']['keypair']['public_key'] }}"
-        state: present

@@ -14,7 +14,8 @@ This repo uses Ansible to sync a standardized development environment across rem
 ## Playbooks
 Current playbooks:
 - `playbooks/bash/sync.yml` — deploys bash config files to `[uth]` hosts
-- `playbooks/ssh/sync.yml` — deploys SSH config to `localhost`, generates an SSH keypair, and pushes the public key to all `[REMOTE_SERVERS]` hosts (proxy + uth); run with `--ask-pass` for initial key distribution
+- `playbooks/ssh/sync.yml` — deploys SSH config to `localhost`
+- `playbooks/ssh/keypair-regen.yml` — generates an SSH keypair on `localhost` and pushes the public key to all `[REMOTE_SERVERS]` hosts (proxy + uth); run with `--ask-pass` for initial key distribution
 - `playbooks/uv/sync.yml` — installs uv and uv tools (yamllint, yamlfix) on `[uth]` hosts
 - `playbooks/vscode/sync.yml` — deploys VSCode settings to `localhost`
 - `playbooks/git/sync.yml` — deploys `.gitconfig` to `localhost`
