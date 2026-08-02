@@ -25,6 +25,7 @@ Current playbooks:
 - `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[uth]` hosts; optionally installs Node.js versions and sets a default
 - `playbooks/go/sync.yml` — installs Go to `~/.local/go`; adds `~/.local/go/bin` to PATH in `.zshrc` (macOS) or `.bashrc` (Linux); version pinned in `vars.yml`
+- `playbooks/gh/sync.yml` — installs/updates GitHub CLI (`gh`) to `~/.local/bin` and manages `gh` extensions (e.g. `nektos/gh-act`); version and extension list pinned in `vars.yml`
 
 Planned: `playbooks/vim/`
 

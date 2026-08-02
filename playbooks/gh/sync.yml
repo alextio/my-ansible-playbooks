@@ -1,0 +1,92 @@
+---
+- name: UTH - GitHub CLI Setup
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  vars:
+    gh_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+    gh_platform: "{{ 'macOS' if ansible_system == 'Darwin' else 'linux' }}"
+    gh_archive_ext: "{{ 'zip' if ansible_system == 'Darwin' else 'tar.gz' }}"
+    gh_archive_stem: "gh_{{ gh_version }}_{{ gh_platform }}_{{ gh_arch }}"
+    gh_archive: "{{ gh_archive_stem }}.{{ gh_archive_ext }}"
+    gh_download_url: "https://github.com/cli/cli/releases/download/v{{ gh_version }}/{{ gh_archive }}"
+    gh_extract_dir: "/tmp/{{ gh_archive_stem }}"
+    gh_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+  tasks:
+    - name: Get current gh version
+      ansible.builtin.command: "{{ gh_install_dir }}/gh version"
+      register: gh_current_version
+      changed_when: false
+      failed_when: false
+
+    - name: Set install flag
+      ansible.builtin.set_fact:
+        gh_needs_install: >-
+          {{ gh_current_version.rc != 0 or
+             gh_version not in gh_current_version.stdout }}
+
+    - name: Download gh {{ gh_version }}
+      ansible.builtin.get_url:
+        url: "{{ gh_download_url }}"
+        dest: "/tmp/{{ gh_archive }}"
+        mode: "0644"
+      when: gh_needs_install
+
+    - name: Remove stale extract directory
+      ansible.builtin.file:
+        path: "{{ gh_extract_dir }}"
+        state: absent
+      when: gh_needs_install
+
+    - name: Extract gh {{ gh_version }}
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ gh_archive }}"
+        dest: /tmp
+        remote_src: true
+      when: gh_needs_install
+
+    - name: Ensure install directory exists
+      ansible.builtin.file:
+        path: "{{ gh_install_dir }}"
+        state: directory
+        mode: "0755"
+      when: gh_needs_install
+
+    - name: Install gh binary
+      ansible.builtin.copy:
+        src: "{{ gh_extract_dir }}/bin/gh"
+        dest: "{{ gh_install_dir }}/gh"
+        mode: "0755"
+        remote_src: true
+        backup: yes
+      when: gh_needs_install
+
+    - name: Clean up archive and extract directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/{{ gh_archive }}"
+        - "{{ gh_extract_dir }}"
+      when: gh_needs_install
+
+    - name: Get installed gh extensions
+      ansible.builtin.command: "{{ gh_install_dir }}/gh extension list"
+      register: gh_ext_list
+      changed_when: false
+      failed_when: false
+
+    - name: Install gh extensions
+      ansible.builtin.command: "{{ gh_install_dir }}/gh extension install {{ item }}"
+      loop: "{{ gh_extensions }}"
+      when: (item | regex_replace('^https://github.com/', '')) not in gh_ext_list.stdout
+      changed_when: true
+
+    - name: Upgrade gh extensions
+      ansible.builtin.command: "{{ gh_install_dir }}/gh extension upgrade --all"
+      register: gh_ext_upgrade
+      changed_when: "'up to date' not in gh_ext_upgrade.stdout"
+      failed_when:
+        - gh_ext_upgrade.rc != 0
+        - "'no extensions installed' not in gh_ext_upgrade.stderr"
