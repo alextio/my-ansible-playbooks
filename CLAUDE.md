@@ -24,7 +24,7 @@ Current playbooks:
 - `playbooks/claude/sync.yml` — deploys global `~/.claude/CLAUDE.md` to `[uth]` hosts
 - `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[uth]` hosts; optionally installs Node.js versions and sets a default
-- `playbooks/go/sync.yml` — installs Go to `~/.local/go`; adds `~/.local/go/bin` to PATH in `.zshrc` (macOS) or `.bashrc` (Linux); version pinned in `vars.yml`
+- `playbooks/go/sync.yml` — installs Go to `~/.local/go`; symlinks `go`/`gofmt` into `~/.local/bin`; version pinned in `vars.yml`
 - `playbooks/gh/sync.yml` — installs/updates GitHub CLI (`gh`) to `~/.local/bin` and manages `gh` extensions (e.g. `nektos/gh-act`); version and extension list pinned in `vars.yml`
 
 Planned: `playbooks/vim/`
@@ -52,7 +52,7 @@ Never define group variables in the `.ini` inventory file (e.g. `[uth:vars]`). A
   ```
   ansible-playbook -i inventory.ini playbooks/<tool>/sync.yml --check --diff
   ```
-- When modifying PATH (e.g. via `lineinfile`), always cover all three shells: bash (`~/.bashrc`), zsh (`~/.zshrc`), and PowerShell (`$PROFILE`). Use separate tasks conditioned on the appropriate OS/shell.
+- Only `playbooks/bash/` may touch `.bashrc` or `.zshrc`, or modify PATH. `~/.local/bin` is already on PATH via `playbooks/bash/templates/.bashrc.j2`, so no other playbook needs to add to PATH. Install standalone binaries to `~/.local/bin` unless explicitly told otherwise.
 - `backup: yes`
 - `hosts` should have `target_hosts`. If I specify a group, set it as the default value alongside `target_hosts`. Default to `uth` unless the playbook is explicitly localhost-only (e.g. `playbooks/vscode/sync.yml`).
 - Never include `connection: local` in playbooks, **except** `playbooks/vscode/sync.yml` which is localhost-only and requires it.
