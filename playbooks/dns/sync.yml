@@ -1,0 +1,66 @@
+---
+- name: DNS - AdGuard Home
+  hosts: "{{ target_hosts | default('dns') }}"
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  vars:
+    # Rendered from templates/rewrites.yml.j2 so the rewrites live in one file
+    adguardhome_rewrites: "{{ lookup('ansible.builtin.template', 'rewrites.yml.j2') | from_yaml }}"
+  pre_tasks:
+    # The role installs the binary and config but never creates the systemd
+    # unit it later stops/starts. Load its install tasks first (public: true
+    # exposes the role's defaults/vars here) so the unit can use them, and so
+    # the adguardhome user exists before the unit references it.
+    - name: Load role defaults and install AdGuardHome.
+      ansible.builtin.include_role:
+        name: bcook254.adguardhome
+        tasks_from: install.yml
+        public: true
+
+    - name: Install AdGuardHome systemd unit.
+      ansible.builtin.template:
+        src: adguardhome.service.j2
+        dest: "/etc/systemd/system/{{ adguardhome_daemon }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+      register: __adguardhome_unit
+
+    - name: Reload systemd after unit change.
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      when: __adguardhome_unit is changed  # noqa: no-handler
+
+    # Ubuntu's systemd-resolved stub listener holds 127.0.0.53:53, which
+    # conflicts with AdGuardHome binding 0.0.0.0:53.
+    - name: Ensure resolved.conf.d exists.
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Disable systemd-resolved DNS stub listener.
+      ansible.builtin.copy:
+        dest: /etc/systemd/resolved.conf.d/adguardhome.conf
+        content: |
+          [Resolve]
+          DNSStubListener=no
+        owner: root
+        group: root
+        mode: "0644"
+      register: __resolved_dropin
+
+    - name: Restart systemd-resolved after drop-in change.
+      ansible.builtin.systemd_service:
+        name: systemd-resolved
+        state: restarted
+      when: __resolved_dropin is changed  # noqa: no-handler
+
+    # The unit may be stuck in the start-limit state from earlier failures.
+    - name: Clear failed state of AdGuardHome unit.
+      ansible.builtin.command: "systemctl reset-failed {{ adguardhome_daemon }}"
+      changed_when: false
+      failed_when: false
+  roles:
+    - role: bcook254.adguardhome
