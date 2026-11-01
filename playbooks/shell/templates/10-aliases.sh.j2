@@ -1,14 +1,3 @@
-export APPTAINER_DOCKER_USERNAME='$oauthtoken'
-export APPTAINER_DOCKER_PASSWORD="{{ vault_apptainer_docker_password }}"
-export APPTAINER_CACHEDIR=~/.cache/apptainer_cache
-
-export HF_TOKEN="{{ vault_hf_token }}"
-
-# SSH aliases for remote servers (generated from inventory)
-{% for host in groups['uth'] %}
-export {{ host }}='{{ hostvars[host]["ansible_host"] }}'
-{% endfor %}
-
 alias docker_kill_all='docker kill $(docker ps -q)'
 alias docker_rm_failed='docker rm $(docker ps -a --filter "exited=1" -q)'
 alias nv='nvidia-smi'

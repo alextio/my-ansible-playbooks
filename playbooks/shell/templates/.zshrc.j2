@@ -1,0 +1,19 @@
+# Zsh-only settings. Env vars, PATH and aliases live in
+# ~/.config/shell.d/*.sh, sourced at the end of this file.
+
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git)
+
+source $ZSH/oh-my-zsh.sh
+
+# nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+
+# Shared snippets (00-common.sh, aliases, per-tool files from other playbooks).
+# (N) avoids a "no matches found" error when the directory is empty.
+for f in ~/.config/shell.d/*.sh(N); do . "$f"; done; unset f

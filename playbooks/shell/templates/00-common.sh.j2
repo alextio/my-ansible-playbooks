@@ -1,0 +1,25 @@
+# Shared by bash and zsh. Keep this POSIX-compatible: no shopt/setopt,
+# no prompt escapes.
+
+# PATH
+export PATH=/usr/bin:$PATH
+export PATH="$HOME/homebrew/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/scripts:$PATH"
+export PATH="$HOME/bin:$PATH"
+export PATH="$HOME/.nvm:$PATH"
+
+[ -f ~/.local/bin/env ] && . ~/.local/bin/env
+{% if ansible_facts['system'] == 'Linux' %}
+
+# Rootless Docker
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export DOCKER_HOST=unix:///run/user/{{ ansible_facts['user_uid'] }}/docker.sock
+
+# Define a static path for the socket to make it easier for tmux to find
+{% if ansible_facts['distribution'] == 'Ubuntu' %}
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
+{% else %}
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+{% endif %}
+{% endif %}
