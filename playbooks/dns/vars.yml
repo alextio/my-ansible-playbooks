@@ -1,0 +1,27 @@
+---
+# Address of Traefik's MetalLB IP; every *.lan name resolves here.
+# Keep in sync with 03-argocd-kubernetes/apps/traefik/values.yaml.
+traefik_ip: 192.168.6.200
+
+# ── bcook254.adguardhome role overrides ──────────────────────────────────────
+# Role default binds DNS to 127.0.0.1 only, which would not serve the LAN.
+adguardhome_dnshosts:
+  - 0.0.0.0
+
+# Role default binds the web UI to 127.0.0.1:80.
+adguardhome_webhost: 0.0.0.0
+adguardhome_webport: 80
+
+adguardhome_local_domain_name: lan
+
+# Web UI login. Pre-hashed (bcrypt) because the role's plain `password` field
+# is re-salted on every run, which would show as a change each time.
+# The hash lives in group_vars/dns/vault.yml. To (re)create it:
+#   mkdir -p group_vars/dns
+#   read -rs "PW?AdGuard admin password: "; echo
+#   HASH=$(htpasswd -bnBC 10 "" "$PW" | tr -d ':\n')
+#   printf 'vault_adguard_admin_hashed_password: "%s"\n' "$HASH" \
+#     | ansible-vault encrypt --output group_vars/dns/vault.yml -
+adguardhome_users:
+  - username: admin
+    hashed_password: "{{ vault_adguard_admin_hashed_password }}"

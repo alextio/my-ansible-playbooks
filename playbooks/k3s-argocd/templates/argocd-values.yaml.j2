@@ -1,0 +1,12 @@
+---
+# Helm values for the argo-cd chart
+# https://github.com/argoproj/argo-helm/blob/main/charts/argo-cd/values.yaml
+
+configs:
+  params:
+    # No ingress controller yet (traefik is disabled); serve plain HTTP so
+    # the UI is reachable via `kubectl port-forward` without TLS errors
+    server.insecure: true
+
+dex:
+  enabled: false

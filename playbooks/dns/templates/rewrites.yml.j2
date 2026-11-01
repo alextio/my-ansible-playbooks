@@ -1,0 +1,13 @@
+# AdGuard Home DNS rewrites, fed to the role's adguardhome_rewrites by sync.yml.
+# Add a name here and re-run the playbook.
+#
+# The role writes `domain:` unquoted into AdGuardHome.yaml, and a bare `*` is
+# a YAML alias, so wildcard domains carry their own inner quotes ('"*.lan"').
+
+# Every *.lan name goes to Traefik, which routes by Host header.
+- domain: '"*.lan"'
+  answer: {{ traefik_ip }}
+
+# Example of a name that points somewhere else:
+# - domain: nas.lan
+#   answer: 192.168.6.50

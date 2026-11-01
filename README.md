@@ -41,6 +41,7 @@ All server details which Ansible uses are stored in `inventory.ini`
 | `go`     | Installs Go to `~/.local/go` | Remote servers |
 | `nodejs` | Installs NVM and Node.js | Remote servers |
 | `claude` | Deploys global `~/.claude/CLAUDE.md` | Remote servers |
+| `podman` | Configures the Podman machine (VM) and container services (e.g. an egress-filtering forward proxy) | Local machine |
 
 ## Prerequisites
 
@@ -112,13 +113,13 @@ ansible-playbook playbooks/<tool>/sync.yml --check --diff
 ### Run all playbooks
 
 ```bash
-./run-all-playbooks.sh
+./run.sh bash git dns
 ```
 
 ### Run a single playbook
 
 ```bash
-ansible-playbook playbooks/bash/sync.yml
+ansible-playbook playbooks/shell/sync.yml
 ansible-playbook playbooks/vscode/sync.yml
 ```
 
@@ -126,20 +127,20 @@ ansible-playbook playbooks/vscode/sync.yml
 
 ```bash
 # One server by alias
-ansible-playbook playbooks/bash/sync.yml -l h100
+ansible-playbook playbooks/shell/sync.yml -l h100
 
 # A group of servers
-ansible-playbook playbooks/bash/sync.yml -l uth
+ansible-playbook playbooks/shell/sync.yml -l uth
 
 # Multiple servers
-ansible-playbook playbooks/bash/sync.yml -l h100,a100
+ansible-playbook playbooks/shell/sync.yml -l h100,a100
 ```
 
 ### Pass extra flags to all playbooks at once
 
 ```bash
-./run-all-playbooks.sh --limit h100
-./run-all-playbooks.sh --check --diff
+./run.sh bash git --limit h100
+./run.sh bash git --check --diff
 ```
 
 ## Project Layout
@@ -148,7 +149,7 @@ ansible-playbook playbooks/bash/sync.yml -l h100,a100
 .
 ├── inventory.ini          # Which servers exist and how to reach them
 ├── ansible.cfg            # Ansible defaults (SSH args, etc.)
-├── run-all-playbooks.sh   # Runs every playbook in order
+├── run.sh                # Runs the named playbooks in order
 ├── group_vars/
 │   ├── all/
 │   │   └── vars.yml       # Variables shared across all hosts

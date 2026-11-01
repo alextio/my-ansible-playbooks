@@ -21,3 +21,7 @@ Scripts are deployed to `~/.local/scripts/<name>` and available via PATH tab com
 
 - The command must run in the current shell context (e.g., `cd` wrappers, environment variable setters)
 - It's a one-liner alias
+
+## Shell snippets (`~/.config/shell.d/`)
+
+`.bashrc.j2` sources every `~/.config/shell.d/*.sh` at the end. Other playbooks that need to set env vars or shell functions drop their own `<tool>.sh` there (see `playbooks/bws/templates/bws.sh.j2`) instead of editing `.bashrc`. This playbook creates the directory.

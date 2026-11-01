@@ -1,4 +1,16 @@
 ---
+roles:
+  - name: geerlingguy.nfs
+    version: 2.1.1
+  # Role minor version tracks the AdGuardHome release (107.77.x -> 0.107.77)
+  - name: bcook254.adguardhome
+    version: 107.77.0
+
 collections:
   - name: community.crypto
   - name: ansible.posix
+  - name: https://github.com/k3s-io/k3s-ansible.git
+    type: git
+    version: 1.2.2
+  - name: kubernetes.core
+    version: 6.6.0

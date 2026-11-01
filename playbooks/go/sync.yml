@@ -10,6 +10,7 @@
     go_archive: "go{{ go_version }}.{{ go_os }}-{{ go_arch }}.tar.gz"
     go_download_url: "https://go.dev/dl/{{ go_archive }}"
     go_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/go"
+    go_bin_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
   tasks:
     - name: Get current Go version
       ansible.builtin.command: "{{ go_install_dir }}/bin/go version"
@@ -55,24 +56,18 @@
         state: absent
       when: go_needs_install
 
-    - name: Add Go bin to PATH in .bashrc
-      ansible.builtin.lineinfile:
-        path: "{{ ansible_facts['env']['HOME'] }}/.bashrc"
-        line: "export PATH=$PATH:{{ go_install_dir }}/bin"
-        backup: yes
-      when: ansible_system == 'Linux'
+    - name: Ensure ~/.local/bin exists
+      ansible.builtin.file:
+        path: "{{ go_bin_dir }}"
+        state: directory
+        mode: "0755"
 
-    - name: Add Go bin to PATH in .zshrc
-      ansible.builtin.lineinfile:
-        path: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
-        line: "export PATH=$PATH:{{ go_install_dir }}/bin"
-        backup: yes
-      when: ansible_system == 'Darwin'
-
-    - name: Add Go bin to PATH in PowerShell profile (Windows)
-      ansible.builtin.lineinfile:
-        path: "{{ ansible_facts['env']['HOME'] }}/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
-        line: "$env:PATH += ';{{ go_install_dir }}/bin'"
-        create: yes
-        backup: yes
-      when: ansible_system == 'Win32NT'
+    - name: Symlink go and gofmt into ~/.local/bin
+      ansible.builtin.file:
+        src: "{{ go_install_dir }}/bin/{{ item }}"
+        dest: "{{ go_bin_dir }}/{{ item }}"
+        state: link
+        force: yes
+      loop:
+        - go
+        - gofmt

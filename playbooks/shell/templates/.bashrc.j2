@@ -1,10 +1,5 @@
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-[[ -f ~/{{ aliases_file | default('.bash_aliases') }} ]] && . ~/{{ aliases_file | default('.bash_aliases') }}
-[[ -f ~/.local/bin/env ]] && . ~/.local/bin/env
+# Bash-only settings. Env vars, PATH and aliases live in
+# ~/.config/shell.d/*.sh, sourced at the end of this file.
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
@@ -113,19 +108,5 @@ fi
 # colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# PATH
-export PATH=/usr/bin:$PATH
-export PATH="$HOME/homebrew/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.local/scripts:$PATH"
-
-# Rootless Docker
-export XDG_RUNTIME_DIR=/run/user/$UID
-export DOCKER_HOST=unix:///run/user/{{ ansible_user_uid }}/docker.sock
-
-# Define a static path for the socket to make it easier for tmux to find
-{% if ansible_distribution == 'Ubuntu' %}
-export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
-{% else %}
-export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
-{% endif %}
+# Shared snippets (00-common.sh, aliases, per-tool files from other playbooks)
+for f in ~/.config/shell.d/*.sh; do [ -r "$f" ] && . "$f"; done; unset f

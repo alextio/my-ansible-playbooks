@@ -1,0 +1,4 @@
+---
+gh_version: "2.63.2"
+gh_extensions:
+  - https://github.com/nektos/gh-act

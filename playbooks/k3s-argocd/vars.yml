@@ -1,0 +1,21 @@
+---
+# k3s release to install (https://update.k3s.io/v1-release/channels)
+k3s_version: "v1.36.5+k3s1"
+
+# Packaged k3s components to disable on the server
+k3s_disabled_components:
+  - traefik
+  - servicelb
+
+# Helm v3 only; kubernetes.core does not support Helm v4
+helm_version: "v3.22.1"
+
+# argo-cd Helm chart (https://argoproj.github.io/argo-helm)
+argocd_chart_version: "10.11.6"
+argocd_namespace: argocd
+argocd_release_name: argocd
+
+# Secrets are discovered from group_vars/k3s_server/vault.yml: every
+# variable named <namespace>__<secret-name> becomes Secret <secret-name>
+# in <namespace>. The value is stored under this key.
+k3s_secret_data_key: token

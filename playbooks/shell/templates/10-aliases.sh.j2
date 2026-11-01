@@ -1,0 +1,6 @@
+alias docker_kill_all='docker kill $(docker ps -q)'
+alias docker_rm_failed='docker rm $(docker ps -a --filter "exited=1" -q)'
+alias nv='nvidia-smi'
+alias show_filesystems='df -Th'
+alias docker_logs="docker compose logs -f"
+alias list_open_ports="ss -tulnp"

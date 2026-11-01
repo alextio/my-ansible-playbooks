@@ -1,0 +1,56 @@
+---
+- name: Shell Configuration (bash/zsh)
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
+  vars_files:
+    - vars.yml
+  tasks:
+    # macOS defaults to zsh; everything else gets bash.
+    - name: Deploy Bash configuration
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: ~/{{ item.dest }}
+        mode: "0644"
+        backup: true
+      loop:
+        - { src: .bashrc.j2, dest: .bashrc }
+        - { src: .bash_profile.j2, dest: .bash_profile }
+      when: ansible_facts['os_family'] != 'Darwin'
+
+    - name: Deploy Zsh configuration
+      ansible.builtin.template:
+        src: .zshrc.j2
+        dest: ~/.zshrc
+        mode: "0644"
+        backup: true
+      when: ansible_facts['os_family'] == 'Darwin'
+
+    - name: Ensure ~/.config/shell.d exists
+      ansible.builtin.file:
+        path: "~/.config/shell.d"
+        state: directory
+        mode: "0755"
+
+    # Shared by bash and zsh; sourced in filename order by the rc files
+    - name: Deploy shared shell snippets
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "~/.config/shell.d/{{ item }}"
+        mode: "0644"
+        backup: true
+      loop:
+        - 00-common.sh
+        - 10-aliases.sh
+
+    - name: Ensure ~/.local/scripts exists
+      ansible.builtin.file:
+        path: "~/.local/scripts"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy bash helper scripts
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "~/.local/scripts/{{ item | basename }}"
+        mode: "0755"
+        backup: true
+      with_fileglob: "scripts/*.sh"
