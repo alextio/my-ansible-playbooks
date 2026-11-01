@@ -1,0 +1,108 @@
+---
+- name: Bootstrap k3s server
+  hosts: "{{ target_hosts | default('k3s_server') }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - vars.yml
+  vars:
+    server_group: k3s_server
+    api_endpoint: "{{ ansible_host }}"
+    # Avoid the role writing KUBECONFIG into the user's shell config
+    user_kubectl: false
+    server_config_yaml: |
+      disable: {{ k3s_disabled_components | to_json }}
+      write-kubeconfig-mode: "0600"
+  roles:
+    - role: k3s.orchestration.prereq
+    - role: k3s.orchestration.k3s_server
+
+- name: Install Argo CD
+  hosts: "{{ target_hosts | default('k3s_server') }}"
+  gather_facts: true
+  become: true
+  vars_files:
+    - vars.yml
+  vars:
+    k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
+    helm_arch: "{{ 'arm64' if ansible_facts['architecture'] in ['aarch64', 'arm64'] else 'amd64' }}"
+    helm_archive: "helm-{{ helm_version }}-linux-{{ helm_arch }}.tar.gz"
+    # In check mode nothing is actually installed, so only talk to the
+    # cluster if k3s, Helm and the Python client already exist on the node
+    argocd_can_deploy: >-
+      {{ not ansible_check_mode or (
+           k3s_kubeconfig_stat.stat.exists and
+           helm_current_version.rc == 0 and
+           k8s_client_pkg is not changed) }}
+  tasks:
+    - name: Install Python Kubernetes client
+      ansible.builtin.apt:
+        name: python3-kubernetes
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      register: k8s_client_pkg
+
+    - name: Get current Helm version
+      ansible.builtin.command: /usr/local/bin/helm version --short
+      register: helm_current_version
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Check for k3s kubeconfig
+      ansible.builtin.stat:
+        path: "{{ k3s_kubeconfig }}"
+      register: k3s_kubeconfig_stat
+
+    - name: Install Helm {{ helm_version }}
+      when: helm_current_version.rc != 0 or helm_version not in helm_current_version.stdout
+      block:
+        - name: Download and extract Helm
+          ansible.builtin.unarchive:
+            src: "https://get.helm.sh/{{ helm_archive }}"
+            dest: /tmp
+            remote_src: true
+
+        # Nothing is extracted in check mode, so there is nothing to copy
+        - name: Install Helm binary
+          when: not ansible_check_mode
+          ansible.builtin.copy:
+            src: "/tmp/linux-{{ helm_arch }}/helm"
+            dest: /usr/local/bin/helm
+            remote_src: true
+            mode: "0755"
+
+        - name: Clean up Helm archive contents
+          ansible.builtin.file:
+            path: "/tmp/linux-{{ helm_arch }}"
+            state: absent
+
+    - name: Wait for k3s node to be Ready
+      when: argocd_can_deploy | bool
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k3s_kubeconfig }}"
+        kind: Node
+        wait: true
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_timeout: 300
+
+    - name: Deploy Argo CD {{ argocd_chart_version }}
+      when: argocd_can_deploy | bool
+      kubernetes.core.helm:
+        kubeconfig: "{{ k3s_kubeconfig }}"
+        binary_path: /usr/local/bin/helm
+        name: "{{ argocd_release_name }}"
+        chart_ref: argo-cd
+        chart_repo_url: https://argoproj.github.io/argo-helm
+        chart_version: "{{ argocd_chart_version }}"
+        release_namespace: "{{ argocd_namespace }}"
+        create_namespace: true
+        values: "{{ lookup('ansible.builtin.template', 'templates/argocd-values.yaml.j2') | from_yaml }}"
+        wait: true
+        wait_timeout: 10m
+
+- name: Create cluster Secrets from vault
+  ansible.builtin.import_playbook: secrets.yaml
