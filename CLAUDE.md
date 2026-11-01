@@ -3,7 +3,7 @@ Say Arrr.
 ## Overview
 
 This repo uses Ansible to sync a standardized development environment across remote  servers and configure local machine settings. Each tool (bash, SSH, vim, zsh, git, vscode, etc.) gets its own playbook under `playbooks/`. Secrets are encrypted with Ansible Vault (AES-256) and stored in `group_vars/**/vault.yml`.
-`run-all-playbooks.sh` — discovers and runs all `playbooks/*/sync.yml` in order; forwards any CLI arguments
+`run.sh <name>...` — runs `playbooks/<name>/sync.yml` for each named playbook in order; arguments from the first `-`-prefixed one onward are forwarded to ansible-playbook
 
 ## Assumptions
 
@@ -13,19 +13,25 @@ This repo uses Ansible to sync a standardized development environment across rem
 
 ## Playbooks
 Current playbooks:
-- `playbooks/bash/sync.yml` — deploys bash config files to `[uth]` hosts
+- `playbooks/shell/sync.yml` — deploys shell config: `.bashrc`/`.bash_profile` on non-macOS hosts, `.zshrc` on macOS, plus shared `~/.config/shell.d/00-common.sh` and `10-aliases.sh` sourced by both
 - `playbooks/ssh/sync.yml` — deploys SSH config to `localhost`
 - `playbooks/ssh/keypair-regen.yml` — generates an SSH keypair on `localhost` and pushes the public key to all `[REMOTE_SERVERS]` hosts (proxy + uth); run with `--ask-pass` for initial key distribution
 - `playbooks/uv/sync.yml` — installs uv and uv tools (yamllint, yamlfix) on `[uth]` hosts
 - `playbooks/vscode/sync.yml` — deploys VSCode settings to `localhost`
 - `playbooks/git/sync.yml` — deploys `.gitconfig` to `localhost`
 - `playbooks/zsh/sync.yml` — deploys Zsh config to `[local]` hosts (macOS)
+- `playbooks/macos/sync.yaml` — deploys macOS-specific config to `[local]` hosts (e.g. `hidutil` key-remapping LaunchAgent at `~/Library/LaunchAgents/com.local.KeyRemapping.plist`)
 
 - `playbooks/claude/sync.yml` — deploys global `~/.claude/CLAUDE.md` to `[uth]` hosts
 - `playbooks/docker/sync.yml` — sets up rootless Docker with NVIDIA GPU support on `[uth]` hosts; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/install-nvm.yaml` — installs NVM on `[uth]` hosts; optionally installs Node.js versions and sets a default
 - `playbooks/go/sync.yml` — installs Go to `~/.local/go`; symlinks `go`/`gofmt` into `~/.local/bin`; version pinned in `vars.yml`
 - `playbooks/gh/sync.yml` — installs/updates GitHub CLI (`gh`) to `~/.local/bin` and manages `gh` extensions (e.g. `nektos/gh-act`); version and extension list pinned in `vars.yml`
+- `playbooks/bws/sync.yml` — installs the Bitwarden Secrets Manager CLI (`bws`) to `~/.local/bin` via the official install script and drops `~/.config/shell.d/bws.sh` (exports `BWS_ACCESS_TOKEN`) and `~/.local/scripts/bws_upsert_secret.sh` (creates or updates a secret: hidden prompt or piped value, project by name/id/menu); version pinned in `vars.yml`
+- `playbooks/bws/token.yml` — prompts for a bws access token and stores it in the macOS keychain (Linux: `0600` file under `~/.config/bws/`)
+- `playbooks/podman/sync.yml` — deploys the Podman machine (VM) config and starts enabled `containers/<service>/` container services on `localhost`; see `playbooks/podman/vm/` (VM config templates) and `playbooks/podman/containers/forward-proxy/` (egress-filtering forward proxy, example service)
+- `playbooks/k3s-argocd/sync.yaml` — bootstraps a single k3s server (traefik and servicelb disabled) via the `k3s.orchestration` roles on `[k3s_server]` and installs Argo CD with `kubernetes.core.helm`; **requires sudo** on the target. k3s, Helm and argo-cd chart versions pinned in `vars.yml`
+- `playbooks/k3s-argocd/secrets.yaml` — creates Kubernetes Secrets (and their namespaces) on an existing cluster from vault variables named `<namespace>__<secret-name>` in `group_vars/k3s_server/vault.yml`; **requires sudo**; see `group_vars/k3s_server/CLAUDE.md`
 
 Planned: `playbooks/vim/`
 
@@ -52,9 +58,10 @@ Never define group variables in the `.ini` inventory file (e.g. `[uth:vars]`). A
   ```
   ansible-playbook -i inventory.ini playbooks/<tool>/sync.yml --check --diff
   ```
-- Only `playbooks/bash/` may touch `.bashrc` or `.zshrc`, or modify PATH. `~/.local/bin` is already on PATH via `playbooks/bash/templates/.bashrc.j2`, so no other playbook needs to add to PATH. Install standalone binaries to `~/.local/bin` unless explicitly told otherwise.
+- Every playbook must complete its `--check` dry-run without failures, including on a fresh host. Tasks that depend on an earlier task's effect (a file it downloads, a service it starts) must be skipped or guarded with `ansible_check_mode`; read-only probes (e.g. `<tool> --version`) should set `check_mode: false` so later conditions see real values.
+- Only `playbooks/shell/` may touch `.bashrc` or `.zshrc`, or modify PATH. `~/.local/bin` is already on PATH via `playbooks/shell/templates/00-common.sh.j2`, so no other playbook needs to add to PATH. Install standalone binaries to `~/.local/bin` unless explicitly told otherwise.
 - `backup: yes`
-- `hosts` should have `target_hosts`. If I specify a group, set it as the default value alongside `target_hosts`. Default to `uth` unless the playbook is explicitly localhost-only (e.g. `playbooks/vscode/sync.yml`).
+- `hosts` should have `target_hosts`. If I specify a group, set it as the default value alongside `target_hosts`. Never `default('uth')`; remote groups are targeted explicitly with `-e target_hosts=<group>`.
 - Never include `connection: local` in playbooks, **except** `playbooks/vscode/sync.yml` which is localhost-only and requires it.
 - Decouple parameters with a high probable of being manually edited by the user (e.g., list of packages to install) into a variable in an accompanying `vars.yml`.
 - Any generated config files should go into a `templates` subdirectory as a jinja2 file.
