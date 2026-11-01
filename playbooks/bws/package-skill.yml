@@ -1,0 +1,31 @@
+---
+# Packages scripts/bws_upsert_secret.sh as a Claude skill inside the
+# argocd-kubernetes repo, so the script and its SKILL.md travel together.
+# The script in scripts/ stays the source of truth: re-run after editing it.
+- name: Package bws_upsert_secret as a Claude skill
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    skill_name: bws-upsert-secret
+    # Relative to where it is run from (02-ansible, as ansible.cfg expects).
+    # Not playbook_dir: 02-ansible is a symlink, so ".." would leave my-homelab.
+    skill_dest: "{{ lookup('env', 'PWD') | dirname }}/03-argocd-kubernetes/.claude/skills/{{ skill_name }}"
+  tasks:
+    - name: Ensure the skill directory exists
+      ansible.builtin.file:
+        path: "{{ skill_dest }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy SKILL.md
+      ansible.builtin.copy:
+        src: skill/SKILL.md
+        dest: "{{ skill_dest }}/SKILL.md"
+        mode: "0644"
+
+    - name: Copy bws_upsert_secret.sh
+      ansible.builtin.copy:
+        src: scripts/bws_upsert_secret.sh
+        dest: "{{ skill_dest }}/bws_upsert_secret.sh"
+        mode: "0755"

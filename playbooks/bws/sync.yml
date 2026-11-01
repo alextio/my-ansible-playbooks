@@ -1,0 +1,52 @@
+---
+- name: bws (Bitwarden Secrets Manager CLI) Setup
+  hosts: "{{ target_hosts | default('localhost') }}"
+  gather_facts: true
+  gather_subset: min
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Get installed bws version
+      ansible.builtin.command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/bws --version"
+      register: bws_check
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Install bws to ~/.local/bin
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://bws.bitwarden.com/install | BWS_VERSION={{ bws_version }} sh
+      when: bws_check.rc != 0 or bws_version not in bws_check.stdout
+      changed_when: true
+
+    - name: Ensure ~/.config/shell.d exists
+      ansible.builtin.file:
+        path: "~/.config/shell.d"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy bws shell snippet
+      ansible.builtin.template:
+        src: bws.sh.j2
+        dest: "~/.config/shell.d/bws.sh"
+        mode: "0644"
+        backup: true
+
+    - name: Ensure ~/.local/scripts exists
+      ansible.builtin.file:
+        path: "~/.local/scripts"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy bws helper scripts
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "~/.local/scripts/{{ item | basename }}"
+        mode: "0755"
+      with_fileglob: "scripts/*.sh"
+
+- name: Store bws access token
+  ansible.builtin.import_playbook: token.yml
+
+- name: Package bws_upsert_secret as a Claude skill
+  ansible.builtin.import_playbook: package-skill.yml

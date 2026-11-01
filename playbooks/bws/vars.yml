@@ -1,0 +1,4 @@
+---
+bws_version: "2.1.0"
+bws_keychain_service: bws-access-token
+bws_token_file: "{{ ansible_facts['env']['HOME'] }}/.config/bws/access_token"

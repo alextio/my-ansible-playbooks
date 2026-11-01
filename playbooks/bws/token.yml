@@ -1,0 +1,60 @@
+---
+- name: bws access token
+  hosts: "{{ target_hosts | default('localhost') }}"
+  gather_facts: true
+  gather_subset: min
+  vars_prompt:
+    # Skipped when passed with -e bws_access_token=...
+    # Leave empty to keep the existing token.
+    - name: bws_access_token
+      prompt: bws machine account access token (empty to keep existing)
+      private: true
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Read token currently in the macOS keychain
+      ansible.builtin.command: >-
+        security find-generic-password
+        -a {{ ansible_facts['user_id'] }} -s {{ bws_keychain_service }} -w
+      register: bws_keychain_current
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      no_log: true
+      when: ansible_facts['system'] == 'Darwin'
+
+    # `security -i` reads the command from stdin so the token never appears
+    # in the process list. -U updates the item if it already exists.
+    - name: Store token in the macOS keychain
+      ansible.builtin.command:
+        cmd: security -i
+        stdin: >-
+          add-generic-password -U
+          -a {{ ansible_facts['user_id'] }} -s {{ bws_keychain_service }}
+          -w "{{ bws_access_token }}"
+      no_log: true
+      changed_when: true
+      when:
+        - ansible_facts['system'] == 'Darwin'
+        - not ansible_check_mode
+        - bws_access_token | length > 0
+        - bws_keychain_current.stdout | default('') != bws_access_token
+
+    # No keychain on Linux, so fall back to an owner-only file. No backup:
+    # a backup copy of a secret would defeat the 0600 file.
+    - name: Create bws config directory
+      ansible.builtin.file:
+        path: "{{ bws_token_file | dirname }}"
+        state: directory
+        mode: "0700"
+      when: ansible_facts['system'] == 'Linux'
+
+    - name: Store token in an owner-only file
+      ansible.builtin.copy:
+        content: "{{ bws_access_token }}"
+        dest: "{{ bws_token_file }}"
+        mode: "0600"
+      no_log: true
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - bws_access_token | length > 0
