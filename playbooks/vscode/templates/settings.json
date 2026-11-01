@@ -57,5 +57,13 @@
     "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
     "extensions.ignoreRecommendations": true,
     "git.confirmSync": false,
-    "python.analysis.typeCheckingMode": "standard"
+    "python.analysis.typeCheckingMode": "standard",
+
+    // Enable experimental Apple Container support for dev containers
+    // https://github.com/apple/container/discussions/912#discussioncomment-15800729
+    "dev.containers.experimentalAppleContainerSupport": true,
+    "dev.containers.dockerPath": "/opt/podman/bin/podman", // if you install podman through homebrew, 
+    "containers.containerClient": "com.microsoft.visualstudio.containers.podman",
+    "containers.containerCommand": "/opt/podman/bin/podman",
+    "containers.orchestratorClient": "com.microsoft.visualstudio.orchestrators.podmancompose"
 }

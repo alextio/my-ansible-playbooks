@@ -1,0 +1,24 @@
+- name: Localhost - macOS Setup
+  hosts: "{{ target_hosts | default('local') }}"
+  gather_facts: true
+  tasks:
+    - name: Ensure LaunchAgents directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy hidutil key remapping LaunchAgent
+      ansible.builtin.template:
+        src: templates/com.local.KeyRemapping.plist.j2
+        dest: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/com.local.KeyRemapping.plist"
+        mode: "0644"
+        backup: true
+      notify: Reload key remapping LaunchAgent
+
+  handlers:
+    - name: Reload key remapping LaunchAgent
+      ansible.builtin.shell: |
+        launchctl bootout gui/{{ ansible_facts['user_uid'] }}/com.local.KeyRemapping 2>/dev/null || true
+        launchctl bootstrap gui/{{ ansible_facts['user_uid'] }} "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/com.local.KeyRemapping.plist"
+      changed_when: true
