@@ -11,6 +11,9 @@ k3s_disabled_components:
 helm_version: "v3.22.1"
 
 # argo-cd Helm chart (https://argoproj.github.io/argo-helm)
+# Bootstrap version only: after the first install, Argo CD manages itself
+# from 03-argocd-kubernetes (manifests/templates/argocd.yaml). Keep this
+# roughly in step so a fresh cluster starts close to what Git will sync.
 argocd_chart_version: "10.11.6"
 argocd_namespace: argocd
 argocd_release_name: argocd

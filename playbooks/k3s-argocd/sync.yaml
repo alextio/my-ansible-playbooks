@@ -89,8 +89,23 @@
           status: "True"
         wait_timeout: 300
 
-    - name: Deploy Argo CD {{ argocd_chart_version }}
+    # Bootstrap only. Once Argo CD is running, the `argocd` Application in
+    # 03-argocd-kubernetes owns it; a helm upgrade here would fight its
+    # self-heal. Checks the Deployment, not the Helm release Secret, since
+    # Argo CD doesn't use (or keep up to date) Helm releases.
+    - name: Check for an existing Argo CD install
       when: argocd_can_deploy | bool
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k3s_kubeconfig }}"
+        kind: Deployment
+        namespace: "{{ argocd_namespace }}"
+        name: "{{ argocd_release_name }}-server"
+      register: argocd_server_deployment
+
+    - name: Deploy Argo CD {{ argocd_chart_version }}
+      when:
+        - argocd_can_deploy | bool
+        - argocd_server_deployment.resources | length == 0
       kubernetes.core.helm:
         kubeconfig: "{{ k3s_kubeconfig }}"
         binary_path: /usr/local/bin/helm

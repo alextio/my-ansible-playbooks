@@ -1,6 +1,10 @@
 ---
 # Helm values for the argo-cd chart
 # https://github.com/argoproj/argo-helm/blob/main/charts/argo-cd/values.yaml
+#
+# Bootstrap values only, applied on first install. After that, Argo CD
+# manages itself from 03-argocd-kubernetes (apps/argocd/values.yaml), which
+# is the source of truth. Keep the two in step for fresh clusters.
 
 configs:
   params:
