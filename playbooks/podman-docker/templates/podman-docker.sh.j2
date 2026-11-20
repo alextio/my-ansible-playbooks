@@ -1,0 +1,5 @@
+# Managed by Ansible (playbooks/podman-docker).
+# Docker SDKs and plain docker-compose use the rootless Podman API socket.
+if [ -z "${DOCKER_HOST:-}" ]; then
+  export DOCKER_HOST="unix://${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+fi
