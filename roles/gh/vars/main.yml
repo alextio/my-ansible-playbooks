@@ -1,0 +1,10 @@
+---
+# Derived values; edit defaults/main.yml instead.
+gh_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+gh_platform: "{{ 'macOS' if ansible_system == 'Darwin' else 'linux' }}"
+gh_archive_ext: "{{ 'zip' if ansible_system == 'Darwin' else 'tar.gz' }}"
+gh_archive_stem: "gh_{{ gh_version }}_{{ gh_platform }}_{{ gh_arch }}"
+gh_archive: "{{ gh_archive_stem }}.{{ gh_archive_ext }}"
+gh_download_url: "https://github.com/cli/cli/releases/download/v{{ gh_version }}/{{ gh_archive }}"
+gh_extract_dir: "/tmp/{{ gh_archive_stem }}"
+gh_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"

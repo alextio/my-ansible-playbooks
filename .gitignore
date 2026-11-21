@@ -1,5 +1,7 @@
 *.retry
 *.swp
 **/tasks
+# Role task files are code, not the ignored tasks above
+!roles/*/tasks/
 
 *vault_pass

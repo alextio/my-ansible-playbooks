@@ -1,4 +1,4 @@
-# Managed by playbooks/bws: exports BWS_ACCESS_TOKEN for the bws CLI
+# Managed by roles/bws: exports BWS_ACCESS_TOKEN for the bws CLI
 {% if ansible_facts['system'] == 'Darwin' %}
 BWS_ACCESS_TOKEN="$(security find-generic-password -a "$USER" -s {{ bws_keychain_service }} -w 2>/dev/null)"
 {% else %}

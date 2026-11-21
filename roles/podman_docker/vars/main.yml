@@ -1,0 +1,7 @@
+---
+# Derived values; edit defaults/main.yml instead.
+# In check mode on a fresh host the packages, and the files and units
+# they ship, don't exist yet; tasks that need them are skipped.
+podman_ready: >-
+  {{ not ansible_check_mode
+     or podman_packages | difference(ansible_facts['packages'].keys()) | length == 0 }}

@@ -1,0 +1,6 @@
+---
+- name: UTH - Claude Code Setup
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
+  gather_facts: true
+  roles:
+    - claude_code
