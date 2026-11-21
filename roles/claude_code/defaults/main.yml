@@ -1,0 +1,8 @@
+---
+# Empty: install or update Claude Code with the official installer (the native
+# binary, always the latest release).
+# A version: install that release of the npm package under nvm's Node.js
+# instead, pinned, with Claude Code's auto-updater off. For hosts whose CPU
+# can't run the native binary (it needs x86-64-v2 or newer): 2.1.112 is the
+# last release that's plain JavaScript. Needs nvm's Node.js (the nodejs role).
+claude_code_npm_version: ""

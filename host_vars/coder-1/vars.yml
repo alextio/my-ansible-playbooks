@@ -10,7 +10,13 @@ t3_service: true
 # gets a shell as `user` (who has sudo). Each run prints a pairing code.
 t3_service_env:
   T3CODE_LAN: "true"
-# Claude Code's native binary needs a newer CPU than the Proxmox host's
-# Athlon II (it dies with SIGILL), so only pi for now.
+# pi first: it pulls in the nodejs role, which the npm Claude Code needs.
 t3_providers:
   - pi
+  - claude_code
+
+# roles/claude_code: Claude Code's native binary needs a newer CPU than the
+# Proxmox host's Athlon II (it dies with SIGILL). 2.1.112 is the last release
+# that's plain JavaScript, so it's pinned from npm, without auto-updates and
+# without seven months of fixes. Remove this on new hardware.
+claude_code_npm_version: "2.1.112"

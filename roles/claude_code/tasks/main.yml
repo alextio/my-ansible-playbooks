@@ -1,5 +1,7 @@
 ---
-# Deploys the global ~/.claude/CLAUDE.md and installs or updates Claude Code.
+# Deploys the global ~/.claude/CLAUDE.md and installs or updates Claude Code:
+# the official installer by default, or a pinned npm release when
+# claude_code_npm_version is set (npm.yml).
 - name: Ensure ~/.claude directory exists
   ansible.builtin.file:
     path: "{{ ansible_facts['env']['HOME'] }}/.claude"
@@ -13,30 +15,37 @@
     mode: "0644"
     backup: true
 
-- name: Check if claude is installed
-  ansible.builtin.command: which claude
-  register: claude_which
-  changed_when: false
-  failed_when: false
+- name: Install a pinned Claude Code from npm
+  ansible.builtin.include_tasks: npm.yml
+  when: claude_code_npm_version | length > 0
 
-- name: Get installed claude version
-  ansible.builtin.shell: claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
-  register: claude_current
-  changed_when: false
-  failed_when: false
-  when: claude_which.rc == 0
+- name: Install or update Claude Code with the official installer
+  when: claude_code_npm_version | length == 0
+  block:
+    - name: Check if claude is installed
+      ansible.builtin.command: which claude
+      register: claude_which
+      changed_when: false
+      failed_when: false
 
-- name: Get latest claude version from npm
-  ansible.builtin.shell: npm view @anthropic-ai/claude-code version 2>/dev/null
-  register: claude_latest
-  changed_when: false
-  failed_when: false
+    - name: Get installed claude version
+      ansible.builtin.shell: claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+      register: claude_current
+      changed_when: false
+      failed_when: false
+      when: claude_which.rc == 0
 
-- name: Install or update claude code
-  ansible.builtin.shell:
-    cmd: curl -fsSL https://claude.ai/install.sh | bash
-  when: >-
-    claude_which.rc != 0 or
-    (claude_latest.rc == 0 and
-     claude_latest.stdout | trim != '' and
-     (claude_current.stdout | default('')) | trim != claude_latest.stdout | trim)
+    - name: Get latest claude version from npm
+      ansible.builtin.shell: npm view @anthropic-ai/claude-code version 2>/dev/null
+      register: claude_latest
+      changed_when: false
+      failed_when: false
+
+    - name: Install or update claude code
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://claude.ai/install.sh | bash
+      when: >-
+        claude_which.rc != 0 or
+        (claude_latest.rc == 0 and
+         claude_latest.stdout | trim != '' and
+         (claude_current.stdout | default('')) | trim != claude_latest.stdout | trim)

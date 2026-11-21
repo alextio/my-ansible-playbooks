@@ -22,7 +22,7 @@ Current playbooks:
 - `playbooks/zsh/sync.yml` — deploys Zsh config to `[local]` hosts (macOS)
 - `playbooks/macos/sync.yaml` — deploys macOS-specific config to `[local]` hosts (e.g. `hidutil` key-remapping LaunchAgent at `~/Library/LaunchAgents/com.local.KeyRemapping.plist`)
 
-- `playbooks/claude-code/sync.yml` — runs `roles/claude_code`: deploys global `~/.claude/CLAUDE.md` and installs or updates Claude Code; defaults to `all:!proxy`
+- `playbooks/claude-code/sync.yml` — runs `roles/claude_code`: deploys global `~/.claude/CLAUDE.md` and installs or updates Claude Code; defaults to `all:!proxy`. With `claude_code_npm_version` set (coder-1: `2.1.112`, the last plain-JavaScript release, because its CPU can't run the native binary) it installs that npm release under nvm's Node instead and sets `DISABLE_AUTOUPDATER` in `~/.claude/settings.json`; needs the nodejs role first
 - `playbooks/pi/sync.yml` — runs `roles/pi`: installs the Pi coding agent (`pi`) as a global npm package under nvm's Node.js; the role depends on `nodejs` (`roles/pi/meta/main.yml`), so Node is set up first; defaults to `localhost`; version pinned in `roles/pi/defaults/main.yml`
 - `playbooks/docker/sync.yml` — runs `roles/docker`: sets up rootless Docker with NVIDIA GPU support; defaults to `all:!proxy`; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/sync.yml` — runs `roles/nodejs`: installs NVM, Node.js versions, a default version and global npm packages (all in `roles/nodejs/defaults/main.yml`); defaults to `all:!proxy`

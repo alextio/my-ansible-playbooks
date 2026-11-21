@@ -1,0 +1,5 @@
+---
+claude_code_npm_package: "@anthropic-ai/claude-code"
+# Non-interactive shells skip the rc files, so load nvm explicitly.
+claude_code_nvm: export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
+claude_code_settings: "{{ ansible_facts['env']['HOME'] }}/.claude/settings.json"
