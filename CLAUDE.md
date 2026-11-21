@@ -94,3 +94,9 @@ Report what you found and recommend one of these: use the role, wrap it with a f
 - Any generated config files should go into a `templates` subdirectory as a jinja2 file.
 - This is a personal repo — `group_vars/**/vars.yml` files are committed directly. No `.example` counterparts needed.
 - Still extract sensitive values (IPs, tokens, passwords) into `group_vars/**/vars.yml` or `vault.yml` and reference via Jinja2 — never hardcode them inline in playbooks or templates.
+
+## CI and pull requests
+
+`main` is protected: work on a branch and open a PR (see the parent repo's `AGENTS.md` for the full workflow). CI (`.github/workflows/ci.yml`) runs `--syntax-check` on every playbook, `ansible-lint`, a check that every `vault.yml` is encrypted, and gitleaks. It has no LAN access and no vault password, so it never runs a play. Paste local `--check --diff` output into the PR body when a change affects hosts.
+
+Run `pre-commit run --all-files` before pushing. Existing lint violations are baselined in `.ansible-lint-ignore`; don't add new lines there to silence a new finding. Fix it instead, and delete a line when you fix the violation it covers.
