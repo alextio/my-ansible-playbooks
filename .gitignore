@@ -5,3 +5,5 @@
 !roles/*/tasks/
 
 *vault_pass
+
+.ansible/
