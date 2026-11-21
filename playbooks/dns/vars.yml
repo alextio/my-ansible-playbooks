@@ -3,6 +3,10 @@
 # Keep in sync with 03-argocd-kubernetes/apps/traefik/values.yaml.
 traefik_ip: 192.168.6.200
 
+# agentgateway's MetalLB IP. It terminates its own TLS, so its names bypass
+# Traefik. Keep in sync with 03-argocd-kubernetes/apps/agentgateway/gateway.yaml.
+agentgateway_ip: 192.168.6.202
+
 # ── bcook254.adguardhome role overrides ──────────────────────────────────────
 # Role default binds DNS to 127.0.0.1 only, which would not serve the LAN.
 adguardhome_dnshosts:

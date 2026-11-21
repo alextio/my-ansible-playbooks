@@ -8,6 +8,19 @@
 - domain: '"*.lan"'
   answer: {{ traefik_ip }}
 
+# Let's Encrypt names (03-argocd-kubernetes/apps/traefik/
+# certificate-wildcard-duckdns.yaml) also go to Traefik.
+- domain: '"*.alextio.duckdns.org"'
+  answer: {{ traefik_ip }}
+
+# agentgateway terminates its own TLS, so both its names bypass Traefik.
+# Exact names win over the wildcards above.
+- domain: agentgateway.lan
+  answer: {{ agentgateway_ip }}
+
+- domain: agentgateway.alextio.duckdns.org
+  answer: {{ agentgateway_ip }}
+
 # Example of a name that points somewhere else:
 # - domain: nas.lan
 #   answer: 192.168.6.50
