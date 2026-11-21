@@ -38,6 +38,10 @@ for name in "${names[@]}"; do
     fi
 done
 
+# Use this repo's ansible.cfg (roles_path, inventory, vault password file)
+# from any directory; Ansible only looks for it in the current one.
+export ANSIBLE_CONFIG="${ANSIBLE_CONFIG:-$SCRIPT_DIR/ansible.cfg}"
+
 failed=()
 for name in "${names[@]}"; do
     playbook="$SCRIPT_DIR/playbooks/$name/sync.yml"
