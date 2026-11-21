@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # CI never decrypts the vault. ansible.cfg points at .vault_pass, which
+  # doesn't exist here, so give it a dummy; encrypted vars just stay opaque.
+  ANSIBLE_VAULT_PASSWORD_FILE: /tmp/dummy-vault-pass
+  ANSIBLE_ROLES_PATH: roles:.ansible/roles
+  ANSIBLE_COLLECTIONS_PATH: .ansible/collections
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install ansible-core ansible-lint
+      - run: echo dummy > "$ANSIBLE_VAULT_PASSWORD_FILE"
+      - name: install galaxy requirements
+        run: |
+          ansible-galaxy role install -r requirements.yml -p .ansible/roles
+          ansible-galaxy collection install -r requirements.yml -p .ansible/collections
+      - name: syntax-check every playbook
+        run: |
+          fail=0
+          for p in playbooks/*/sync.y*ml playbooks/k3s-argocd/secrets.yaml; do
+            echo "::group::$p"
+            ansible-playbook --syntax-check "$p" || fail=1
+            echo "::endgroup::"
+          done
+          exit $fail
+      # Existing violations are baselined in .ansible-lint-ignore; new
+      # ones fail. Fixing an ignored one means deleting its line there.
+      - run: ansible-lint
+
+  vault:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/check-vault-encrypted.sh
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks git --redact --verbose .

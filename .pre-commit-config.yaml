@@ -1,0 +1,26 @@
+# Same checks CI runs, so they fail before a push instead of after.
+#   uv tool install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: detect-private-key
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: vault-encrypted
+        name: vault.yml files are encrypted
+        entry: scripts/check-vault-encrypted.sh
+        language: script
+        files: vault\.ya?ml$
+        pass_filenames: false
+      - id: ansible-lint
+        name: ansible-lint
+        entry: ansible-lint
+        language: system
+        files: \.(ya?ml|j2)$
+        pass_filenames: false
