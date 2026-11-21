@@ -1,0 +1,7 @@
+---
+# daemon-reload picks up the PATH drop-in; `t3 service restart` re-reads
+# service.env. Skipped in check mode (command tasks don't run there).
+- name: Restart t3 service
+  ansible.builtin.shell:
+    cmd: systemctl --user daemon-reload && {{ ansible_facts['env']['HOME'] }}/.local/bin/t3 service restart
+  changed_when: true

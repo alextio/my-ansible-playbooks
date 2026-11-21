@@ -1,0 +1,16 @@
+---
+# Agent workspace VM (rootless Podman, LAN-isolated by the Proxmox firewall).
+
+# roles/t3code: run the t3 server as a service.
+t3_service: true
+# LAN mode: the server listens on coder-1's LAN address, port 3773, so the
+# phone reaches it at home and over Tailscale (through the subnet router).
+# The Proxmox firewall doesn't filter incoming traffic, so anyone on the LAN
+# can reach the port; a pairing token is the only lock, and a paired device
+# gets a shell as `user` (who has sudo). Each run prints a pairing code.
+t3_service_env:
+  T3CODE_LAN: "true"
+# Claude Code's native binary needs a newer CPU than the Proxmox host's
+# Athlon II (it dies with SIGILL), so only pi for now.
+t3_providers:
+  - pi

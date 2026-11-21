@@ -1,0 +1,106 @@
+---
+# Runs the t3 server as the systemd user service that `t3 service install`
+# creates (t3code.service). Included from main.yml when t3_service is true.
+- name: Require Linux for the t3 service
+  ansible.builtin.assert:
+    that: ansible_facts['system'] == 'Linux'
+    fail_msg: t3_service manages a systemd user service, so it only runs on Linux.
+
+- name: Check lingering
+  ansible.builtin.command: loginctl show-user {{ ansible_facts['user_id'] }} --property=Linger --value
+  register: t3_linger
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Without lingering, systemd stops the service when the last SSH session closes.
+- name: Require lingering
+  ansible.builtin.assert:
+    that: t3_linger.stdout | trim == 'yes'
+    fail_msg: >-
+      Lingering is off for {{ ansible_facts['user_id'] }}, so the t3 service would stop at logout.
+      Run `sudo loginctl enable-linger {{ ansible_facts['user_id'] }}` (the podman_docker role does this).
+
+# Empty when nvm isn't installed (e.g. a dry run on a fresh host).
+- name: Find nvm's default Node.js bin directory
+  ansible.builtin.shell:
+    cmd: >-
+      export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" &&
+      dirname "$(nvm which default)"
+    executable: /bin/bash
+  register: t3_node_bin
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Create the t3code.service drop-in directory
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/t3code.service.d"
+    state: directory
+    mode: "0755"
+
+# A drop-in, because `t3 service install` rewrites t3code.service and
+# service.env can't set PATH.
+- name: Put the provider CLIs on the service's PATH
+  ansible.builtin.template:
+    src: t3code-path.conf.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/t3code.service.d/10-path.conf"
+    mode: "0644"
+    backup: true
+  vars:
+    t3_path_dirs: >-
+      {{ t3_service_path_dirs
+         + ([t3_node_bin.stdout | trim] if t3_node_bin.rc == 0 and t3_node_bin.stdout | trim else []) }}
+  notify: Restart t3 service
+
+# One line per key, so settings t3 writes itself (e.g. `t3 up --lan`) stay.
+- name: Set service.env entries
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts['env']['HOME'] }}/.t3/service.env"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    create: true
+    mode: "0600"
+    backup: true
+  loop: "{{ t3_service_env | dict2items }}"
+  notify: Restart t3 service
+
+- name: Get t3 service status
+  ansible.builtin.command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/t3 status --json"
+  register: t3_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Also moves an installed service to a newly installed t3_version.
+- name: Install and start the t3 service
+  ansible.builtin.command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/t3 service install"
+  when: >-
+    t3_status.rc != 0 or
+    not (t3_status.stdout | from_json).service.installed or
+    (t3_status.stdout | from_json).service.installedVersion != t3_version
+  changed_when: true
+
+# Pairing needs the server running with the current service.env (e.g. LAN
+# mode), so restart it now if a change above asked for that.
+- name: Apply pending service restarts
+  ansible.builtin.meta: flush_handlers
+
+- name: Mint a pairing token
+  ansible.builtin.command:
+    argv: >-
+      {{ [ansible_facts['env']['HOME'] ~ '/.local/bin/t3', 'pair',
+          '--ttl', t3_pair_ttl, '--label', t3_pair_label]
+         + (['--scope'] | product(t3_pair_scopes) | flatten) }}
+  register: t3_pair_out
+  # The server listens a few seconds after a restart.
+  retries: 5
+  delay: 3
+  until: t3_pair_out.rc == 0
+  changed_when: true
+  when: t3_pair | bool
+
+- name: Show the pairing link (open it, or scan the QR code in the T3 Code app)
+  ansible.builtin.debug:
+    msg: "{{ t3_pair_out.stdout_lines }}"
+  when: t3_pair | bool and not ansible_check_mode

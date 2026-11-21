@@ -4,7 +4,8 @@
 # The script unpacks the release into ~/.t3/runtime/versions/<version> and links
 # `t3` into ~/.local/bin. It never edits shell rc files. Then it runs the role
 # for each provider in t3_providers (defaults/main.yml); logging in to them is
-# manual, on the same host.
+# manual, on the same host. With t3_service, it then runs the server as a
+# systemd user service (service.yml).
 - name: Get installed t3 version
   ansible.builtin.command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/t3 --version"
   register: t3_check
@@ -15,7 +16,8 @@
 - name: Install t3 to ~/.local/bin
   ansible.builtin.shell:
     cmd: curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION={{ t3_version }} sh
-  when: t3_check.rc != 0 or (t3_check.stdout | regex_search('[0-9][^ ]*')) != t3_version
+  # `t3 --version` prints "t3 v0.1.11"; match the whole version, not the "3".
+  when: t3_check.rc != 0 or (t3_check.stdout | regex_search('[0-9]+\.[0-9]+\.[0-9]+')) != t3_version
   changed_when: true
 
 - name: Set up provider CLIs
@@ -24,3 +26,8 @@
   loop: "{{ t3_providers }}"
   loop_control:
     loop_var: t3_provider
+
+# After the providers, so the PATH drop-in can find nvm's Node.js.
+- name: Run the t3 server as a service
+  ansible.builtin.include_tasks: service.yml
+  when: t3_service | bool
