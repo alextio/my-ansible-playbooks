@@ -44,6 +44,7 @@ All server details which Ansible uses are stored in `inventory.ini`
 | `pi` | Installs the Pi coding agent (`pi`) via npm, after Node.js | Local machine |
 | `podman` | Configures the Podman machine (VM) and container services (e.g. an egress-filtering forward proxy) | Local machine |
 | `t3code` | Installs the T3 Code CLI (`t3`) to `~/.local/bin`, plus the provider CLIs listed in `roles/t3code/defaults/main.yml` | Local machine (`-e target_hosts=<group>` for remote) |
+| `podman-docker` | Installs rootless Podman as a Docker drop-in (`docker` CLI, API socket, Docker Compose from GitHub) on Debian 13 hosts | Remote servers (`podman_docker`) |
 
 ## Prerequisites
 

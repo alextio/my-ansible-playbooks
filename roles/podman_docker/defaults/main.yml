@@ -3,9 +3,6 @@ podman_packages:
   - podman
   # `docker` wrapper script and docker man pages
   - podman-docker
-  # Compose v2. `podman compose` and `docker compose` run it against the
-  # user's rootless socket.
-  - docker-compose
   # Rootless support Debian doesn't pull in with podman: subuid mapping,
   # pasta networking, and a user D-Bus for `systemctl --user`.
   - uidmap
@@ -20,3 +17,9 @@ podman_users:
 # Where short names like `nginx` resolve. Docker only knows docker.io.
 podman_unqualified_search_registries:
   - docker.io
+
+# https://github.com/docker/compose/releases. Installed from GitHub (with its
+# checksum) rather than Debian's docker-compose package, which is years
+# behind. `podman compose` and `docker compose` run it against each user's
+# rootless socket.
+docker_compose_version: v5.8.0
