@@ -1,0 +1,41 @@
+---
+# Installs the Pi coding agent CLI (`pi`) as a global npm package under nvm's
+# default Node.js (set up first by the nodejs role, a meta dependency). Log in
+# manually afterwards: run `pi`, then `/login`.
+- name: Get Node.js version
+  ansible.builtin.shell:
+    cmd: "{{ pi_nvm }} node --version"
+    executable: /bin/bash
+  register: pi_node_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Require Node.js {{ pi_node_min_version }} or newer
+  ansible.builtin.assert:
+    that:
+      - pi_node_check.rc == 0
+      - pi_node_check.stdout | trim | regex_replace('^v', '') is version(pi_node_min_version, '>=')
+    fail_msg: >-
+      Pi needs Node.js {{ pi_node_min_version }}+ from nvm (found:
+      {{ pi_node_check.stdout | default('none', true) | trim }}). Check the nodejs role (node_default_version).
+  # On a fresh host the nodejs role installs nothing during a dry run.
+  when: not ansible_check_mode
+
+- name: Get installed pi version
+  ansible.builtin.shell:
+    cmd: "{{ pi_nvm }} npm ls -g --depth=0 --json {{ pi_package }}"
+    executable: /bin/bash
+  register: pi_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install pi
+  ansible.builtin.shell:
+    cmd: "{{ pi_nvm }} npm install -g --ignore-scripts {{ pi_package }}@{{ pi_version }}"
+    executable: /bin/bash
+  when: >-
+    pi_check.rc != 0 or
+    ((pi_check.stdout | from_json).dependencies | default({}))[pi_package].version | default('') != pi_version
+  changed_when: true

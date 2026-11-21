@@ -1,0 +1,9 @@
+---
+# Installs Pi via roles/pi (and Node.js via its nodejs dependency). Version
+# pinned in roles/pi/defaults/main.yml.
+- name: Pi Setup
+  hosts: "{{ target_hosts | default('localhost') }}"
+  gather_facts: true
+  gather_subset: min
+  roles:
+    - pi

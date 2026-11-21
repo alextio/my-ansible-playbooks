@@ -1,0 +1,140 @@
+---
+- name: Require a Debian host
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == 'Debian'
+    fail_msg: "This playbook targets Debian; {{ inventory_hostname }} is {{ ansible_facts['distribution'] }}."
+
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+  check_mode: false
+
+- name: Install Podman and the docker shim
+  ansible.builtin.apt:
+    name: "{{ podman_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# Debian's docker-compose is years behind; Podman would pick it up
+# first from /usr/libexec.
+- name: Remove Debian's Compose package
+  ansible.builtin.apt:
+    name: docker-compose
+    state: absent
+
+- name: Create the Docker CLI plugin directory
+  ansible.builtin.file:
+    path: "{{ compose_plugin_dir }}"
+    state: directory
+    mode: "0755"
+  register: compose_dir
+
+- name: Install Docker Compose {{ docker_compose_version }}
+  ansible.builtin.get_url:
+    url: "{{ compose_url }}"
+    checksum: "sha256:{{ compose_url }}.sha256"
+    dest: "{{ compose_plugin_dir }}/docker-compose"
+    mode: "0755"
+  register: compose_bin
+  # In check mode on a fresh host the directory doesn't exist yet.
+  when: not (ansible_check_mode and compose_dir is changed)
+
+- name: Provide the docker-compose command
+  ansible.builtin.file:
+    src: "{{ compose_plugin_dir }}/docker-compose"
+    dest: /usr/local/bin/docker-compose
+    state: link
+  when: not (ansible_check_mode and (compose_bin is changed or compose_bin is skipped))
+
+# Without this file, podman-docker prints "Emulate Docker CLI using
+# podman" on every call, which breaks scripts that parse docker output.
+- name: Silence the docker emulation notice
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/containers/nodocker
+    mode: "0644"
+    force: false
+  when: podman_ready
+
+- name: Resolve short image names on Docker Hub, like Docker
+  ansible.builtin.template:
+    src: registries-docker-compat.conf.j2
+    dest: /etc/containers/registries.conf.d/50-docker-compat.conf
+    mode: "0644"
+  when: podman_ready
+
+# ── Per user ───────────────────────────────────────────────────────────
+- name: Look up Podman users
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ item }}"
+  loop: "{{ podman_users }}"
+
+# Keeps the user's systemd, and so its socket and containers, running
+# when nobody is logged in.
+- name: Enable lingering
+  ansible.builtin.command: loginctl enable-linger {{ item }}
+  args:
+    creates: /var/lib/systemd/linger/{{ item }}
+  loop: "{{ podman_users }}"
+  register: linger
+
+# dbus.socket first: Ansible's own login starts the user's systemd before
+# dbus-user-session is installed, so its bus isn't running yet, and
+# Podman then falls back to cgroupfs with a warning on every call.
+- name: Enable the user D-Bus, rootless API socket and restart service
+  ansible.builtin.systemd_service:
+    name: "{{ item.1 }}"
+    scope: user
+    enabled: true
+    state: "{{ 'started' if item.1.endswith('.socket') else omit }}"
+    daemon_reload: true
+  become: true
+  become_user: "{{ item.0 }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts['getent_passwd'][item.0][1] }}"
+  loop: "{{ podman_users | product(['dbus.socket', 'podman.socket', 'podman-restart.service']) | list }}"
+  # In check mode a freshly lingered user has no /run/user/<uid> yet.
+  when: podman_ready and not (ansible_check_mode and linger is changed)
+
+# Docker SDKs and docker-compose read DOCKER_HOST. Sourced by the shell
+# playbook's config (~/.config/shell.d/*.sh).
+- name: Create shell.d
+  ansible.builtin.file:
+    path: "{{ ansible_facts['getent_passwd'][item][4] }}/.config/shell.d"
+    state: directory
+    owner: "{{ item }}"
+    mode: "0755"
+  loop: "{{ podman_users }}"
+
+- name: Point DOCKER_HOST at the rootless socket
+  ansible.builtin.template:
+    src: podman-docker.sh.j2
+    dest: "{{ ansible_facts['getent_passwd'][item][4] }}/.config/shell.d/podman-docker.sh"
+    owner: "{{ item }}"
+    mode: "0644"
+  loop: "{{ podman_users }}"
+
+# ── Smoke test ─────────────────────────────────────────────────────────
+- name: Ping the rootless Docker API
+  ansible.builtin.uri:
+    unix_socket: "/run/user/{{ ansible_facts['getent_passwd'][item][1] }}/podman/podman.sock"
+    url: http://d/_ping
+    return_content: true
+  become: true
+  become_user: "{{ item }}"
+  loop: "{{ podman_users }}"
+  register: api_ping
+  failed_when: api_ping.content != 'OK'
+  when: not ansible_check_mode
+
+- name: Check docker compose runs Compose {{ docker_compose_version }}
+  ansible.builtin.command: docker compose version
+  become: true
+  become_user: "{{ podman_users[0] }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts['getent_passwd'][podman_users[0]][1] }}"
+  register: compose_version
+  changed_when: false
+  failed_when: docker_compose_version.lstrip('v') not in compose_version.stdout
+  when: not ansible_check_mode and podman_users | length > 0

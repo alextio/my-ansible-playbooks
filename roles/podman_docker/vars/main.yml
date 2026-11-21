@@ -1,0 +1,11 @@
+---
+# Derived values; edit defaults/main.yml instead.
+compose_arch: "{{ 'aarch64' if ansible_facts['architecture'] in ['aarch64', 'arm64'] else 'x86_64' }}"
+compose_url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-{{ compose_arch }}"
+# Where `podman compose` and `docker compose` look for the plugin.
+compose_plugin_dir: /usr/local/lib/docker/cli-plugins
+# In check mode on a fresh host the packages, and the files and units
+# they ship, don't exist yet; tasks that need them are skipped.
+podman_ready: >-
+  {{ not ansible_check_mode
+     or podman_packages | difference(ansible_facts['packages'].keys()) | length == 0 }}

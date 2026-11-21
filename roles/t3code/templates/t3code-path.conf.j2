@@ -1,0 +1,4 @@
+# Managed by Ansible (roles/t3code). Puts the provider CLIs on the t3
+# server's PATH; systemd's default PATH has only the system directories.
+[Service]
+Environment="PATH={{ (t3_path_dirs + ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin']) | join(':') }}"

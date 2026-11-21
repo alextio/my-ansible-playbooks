@@ -1,0 +1,9 @@
+---
+# Installs t3 and its provider CLIs via roles/t3code. Versions and the provider
+# list are in roles/t3code/defaults/main.yml.
+- name: T3 Code Setup
+  hosts: "{{ target_hosts | default('localhost') }}"
+  gather_facts: true
+  gather_subset: min
+  roles:
+    - t3code

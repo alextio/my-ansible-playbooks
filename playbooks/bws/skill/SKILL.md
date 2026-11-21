@@ -14,7 +14,10 @@ which is what an `ExternalSecret`'s `remoteRef.key` needs. The script is
 ```
 
 Needs `bws`, `openssl` and `BWS_ACCESS_TOKEN` in the environment (`htpasswd`
-for `--bcrypt`).
+for `--bcrypt`). In the devcontainer `bws` is a client for the bws-broker
+container instead (`BWS_BROKER_URL` is set): the token is not available there
+and secret values can be written but never read back. Don't go looking for the
+token.
 
 ## Cases
 

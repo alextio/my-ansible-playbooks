@@ -1,0 +1,45 @@
+---
+# Pinned t3 release (https://github.com/pingdotgg/t3code/releases). Bump to update.
+t3_version: "0.1.11"
+
+# Provider CLIs to set up after t3, by role name under roles/. Each role also has its
+# own playbook (./run.sh claude-code, ./run.sh pi). Logging in is manual:
+#   claude_code: claude auth login
+#   pi:          run `pi`, then /login (also runs the nodejs role first)
+t3_providers:
+  - claude_code
+  - pi
+
+# Run the t3 server as a systemd user service (`t3 service install`), so it keeps
+# running after logout and starts at boot. Linux only, and the user needs
+# lingering (`sudo loginctl enable-linger <user>`; the podman_docker role does
+# this for its users). Off by default: on a laptop, the desktop app starts its
+# own server.
+t3_service: false
+
+# Entries written to ~/.t3/service.env (KEY: value), read when the service
+# starts. With nothing set, the server answers only on 127.0.0.1:3773; reach it
+# with `t3 up --connect` (T3 Connect) or an SSH port forward. Examples:
+#   T3CODE_LAN: "true"   # listen on the LAN and tailnet addresses. Anyone who
+#                        # can reach the port can try to pair, and a paired
+#                        # device gets a shell as this user.
+#   T3CODE_PORT: "3773"
+t3_service_env: {}
+
+# Print a one-time pairing link and QR code after the service step, to add a
+# device (phone, desktop app). Every run mints a new token; older unused ones
+# stay valid until they expire. Skip it for one run with -e t3_pair=false.
+# The token is in the playbook output until it's used or expires, and whoever
+# uses it first gets t3_pair_scopes on this host. Only runs with t3_service.
+t3_pair: true
+t3_pair_ttl: 10m
+# Shown in the server's connections list (Settings > Sharing & access).
+t3_pair_label: "{{ ansible_facts['hostname'] }} (Ansible)"
+# Empty = t3's default set, which includes terminal and file access.
+t3_pair_scopes: []
+
+# Directories put first on the service's PATH, so the server finds the
+# provider CLIs (systemd starts it with only /usr/bin and friends). nvm's
+# default Node.js bin directory, where pi lives, is added automatically.
+t3_service_path_dirs:
+  - "{{ ansible_facts['env']['HOME'] }}/.local/bin"

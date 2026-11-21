@@ -81,7 +81,9 @@ command -v bws >/dev/null || die "bws not found"
 case $hash_algo in
     bcrypt) command -v htpasswd >/dev/null || die "htpasswd not found (apache2-utils / httpd-tools)" ;;
 esac
-[ -n "${BWS_ACCESS_TOKEN:-}" ] || die "BWS_ACCESS_TOKEN is not set"
+# In the devcontainer, bws is a client for the bws-broker container, which
+# holds the token
+[ -n "${BWS_ACCESS_TOKEN:-}" ] || [ -n "${BWS_BROKER_URL:-}" ] || die "BWS_ACCESS_TOKEN (or BWS_BROKER_URL) is not set"
 
 # tsv: ID, Name, Creation Date (after a header row)
 projects=$(bws project list -o tsv | tail -n +2)

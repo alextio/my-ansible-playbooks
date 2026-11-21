@@ -40,8 +40,11 @@ All server details which Ansible uses are stored in `inventory.ini`
 | `uv`     | Installs `uv` and Python tools (`yamllint`, `yamlfix`) | Remote servers |
 | `go`     | Installs Go to `~/.local/go` | Remote servers |
 | `nodejs` | Installs NVM and Node.js | Remote servers |
-| `claude` | Deploys global `~/.claude/CLAUDE.md` | Remote servers |
+| `claude-code` | Deploys global `~/.claude/CLAUDE.md` and installs Claude Code | Remote servers |
+| `pi` | Installs the Pi coding agent (`pi`) via npm, after Node.js | Local machine |
 | `podman` | Configures the Podman machine (VM) and container services (e.g. an egress-filtering forward proxy) | Local machine |
+| `t3code` | Installs the T3 Code CLI (`t3`) to `~/.local/bin`, plus the provider CLIs listed in `roles/t3code/defaults/main.yml` | Local machine (`-e target_hosts=<group>` for remote) |
+| `podman-docker` | Installs rootless Podman as a Docker drop-in (`docker` CLI, API socket, Docker Compose from GitHub) on Debian 13 hosts | Remote servers (`podman_docker`) |
 
 ## Prerequisites
 
@@ -160,6 +163,13 @@ ansible-playbook playbooks/shell/sync.yml -l h100,a100
 │       ├── sync.yml       # Entry point — run this to apply the config
 │       ├── vars.yml       # Variables for this tool (packages, versions, etc.)
 │       └── templates/     # Jinja2 templates for generated config files
+├── roles/
+│   └── <tool>/            # Install-a-tool playbooks: sync.yml just runs this role
+│       ├── tasks/main.yml
+│       ├── defaults/main.yml  # User-editable settings (versions, package lists)
+│       ├── vars/main.yml      # Values derived from defaults (URLs, arch)
+│       ├── meta/main.yml      # Roles to run first (optional)
+│       └── templates/
 └── tasks/
     └── backup_file.yml    # Shared task: back up a file before overwriting it
 ```
@@ -172,6 +182,8 @@ ansible-playbook playbooks/shell/sync.yml -l h100,a100
 4. Add `templates/` — Jinja2 templates for any config files the playbook generates
 5. Set `hosts: "{{ target_hosts | default('<group>') }}"` at the top of `sync.yml`
 6. Test with `--check --diff` before running for real
+
+If the tool is something you install (a CLI, a runtime), make it a role instead: put the tasks, defaults and templates in `roles/<tool>/` and have `playbooks/<tool>/sync.yml` only set `hosts` and list the role (see `playbooks/gh/sync.yml`).
 
 ## Common Issues
 

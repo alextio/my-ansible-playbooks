@@ -1,0 +1,6 @@
+---
+- name: UTH - NVM Install
+  hosts: "{{ target_hosts | default('all:!proxy') }}"
+  gather_facts: true
+  roles:
+    - nodejs

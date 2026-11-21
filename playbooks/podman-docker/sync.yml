@@ -1,0 +1,19 @@
+---
+# Installs rootless Podman on a Debian 13 host as a Docker drop-in, for the
+# users in `podman_users`:
+#   - `docker`                       -> podman-docker shim
+#   - `docker compose`, `docker-compose` -> Docker's Compose binary from GitHub
+#                                       (docker_compose_version), run by
+#                                       `podman compose`
+#   - Docker API socket              -> each user's rootless podman.socket,
+#                                       exported as DOCKER_HOST
+#   - `nginx` short names            -> resolved on docker.io
+#   - --restart=always               -> podman-restart.service brings
+#                                       containers back after a reboot
+# Requires sudo on the target.
+- name: Rootless Podman as a Docker drop-in
+  hosts: "{{ target_hosts | default('podman_docker') }}"
+  gather_facts: true
+  become: true
+  roles:
+    - podman_docker

@@ -1,0 +1,57 @@
+---
+# Pinned Claude Code from npm under nvm's Node.js, for hosts that can't run
+# the native binary. Releases after 2.1.112 ship only the native binary, so
+# this stays on an old release until the host is replaced.
+- name: Get Node.js version
+  ansible.builtin.shell:
+    cmd: "{{ claude_code_nvm }} node --version"
+    executable: /bin/bash
+  register: claude_code_node
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Require nvm's Node.js
+  ansible.builtin.assert:
+    that: claude_code_node.rc == 0
+    fail_msg: >-
+      claude_code_npm_version needs Node.js from nvm, which isn't installed.
+      Run the nodejs role first (./run.sh nodejs, or include pi in t3_providers).
+  # On a fresh host the nodejs role installs nothing during a dry run.
+  when: not ansible_check_mode
+
+- name: Get installed Claude Code npm version
+  ansible.builtin.shell:
+    cmd: "{{ claude_code_nvm }} npm ls -g --depth=0 --json {{ claude_code_npm_package }}"
+    executable: /bin/bash
+  register: claude_code_npm
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install Claude Code {{ claude_code_npm_version }} from npm
+  ansible.builtin.shell:
+    cmd: "{{ claude_code_nvm }} npm install -g {{ claude_code_npm_package }}@{{ claude_code_npm_version }}"
+    executable: /bin/bash
+  when: >-
+    claude_code_npm.rc != 0 or
+    ((claude_code_npm.stdout | from_json).dependencies | default({}))[claude_code_npm_package].version
+    | default('') != claude_code_npm_version
+  changed_when: true
+
+# Otherwise Claude Code updates itself to a native release, which crashes.
+- name: Read ~/.claude/settings.json
+  ansible.builtin.slurp:
+    src: "{{ claude_code_settings }}"
+  register: claude_code_settings_file
+  failed_when: false
+
+- name: Turn off Claude Code's auto-updater
+  ansible.builtin.copy:
+    content: >-
+      {{ (claude_code_settings_file.content | default('e30=') | b64decode | from_json)
+         | combine({'env': {'DISABLE_AUTOUPDATER': '1'}}, recursive=true)
+         | to_nice_json(indent=2) }}
+    dest: "{{ claude_code_settings }}"
+    mode: "0644"
+    backup: true

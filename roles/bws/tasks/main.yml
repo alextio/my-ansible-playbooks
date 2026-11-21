@@ -1,0 +1,29 @@
+---
+# Installs the bws CLI to ~/.local/bin and drops ~/.config/shell.d/bws.sh,
+# which exports BWS_ACCESS_TOKEN from the keychain or token file that
+# playbooks/bws/token.yml writes.
+- name: Get installed bws version
+  ansible.builtin.command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/bws --version"
+  register: bws_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install bws to ~/.local/bin
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://bws.bitwarden.com/install | BWS_VERSION={{ bws_version }} sh
+  when: bws_check.rc != 0 or bws_version not in bws_check.stdout
+  changed_when: true
+
+- name: Ensure ~/.config/shell.d exists
+  ansible.builtin.file:
+    path: "~/.config/shell.d"
+    state: directory
+    mode: "0755"
+
+- name: Deploy bws shell snippet
+  ansible.builtin.template:
+    src: bws.sh.j2
+    dest: "~/.config/shell.d/bws.sh"
+    mode: "0644"
+    backup: true

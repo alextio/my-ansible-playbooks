@@ -10,7 +10,8 @@
       prompt: bws machine account access token (empty to keep existing)
       private: true
   vars_files:
-    - vars.yml
+    # Same keychain service and token file the bws role's shell snippet reads
+    - ../../roles/bws/defaults/main.yml
   tasks:
     - name: Read token currently in the macOS keychain
       ansible.builtin.command: >-
