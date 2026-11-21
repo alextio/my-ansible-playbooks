@@ -67,6 +67,17 @@ Never define group variables in the `.ini` inventory file (e.g. `[uth:vars]`). A
 - **Pass variables as role parameters** when you want an explicit, intentional override — this is clearer than relying on precedence order and overrides role defaults.
 - **Use `--extra-vars` (`-e`)** only when you need a guaranteed override and are unsure what else might be set — it beats everything.
 
+## Check Galaxy Before Writing a Playbook
+
+Before writing a new playbook (or a large set of tasks) from scratch, search [Ansible Galaxy](https://galaxy.ansible.com/) for existing roles and collections that already do the job. Evaluate them before deciding:
+
+- **Maintenance:** last release/commit date, open issues, whether it supports the target OS versions (e.g. EL10, Debian 13).
+- **Trust:** prefer official or vendor-maintained content (e.g. `linux-system-roles.*`, `fedora.linux_system_roles`, `containers.podman`, `kubernetes.core`), then widely used community authors (e.g. `geerlingguy.*`). Check download counts.
+- **Fit:** does it cover what's actually needed, or only part of it? Does it pull in heavy dependencies?
+- **Repo rules:** can it pass `--check` on a fresh host (see below), or can it be guarded like `artis3n.tailscale.machine` in `playbooks/tailscale/sync.yml`?
+
+Report what you found and recommend one of these: use the role, wrap it with a few extra tasks, or write plain tasks. Give the reason, such as "the role doesn't cover X" or "it's unmaintained". Pin any role or collection you adopt in `requirements.yml`.
+
 ## Always Ensure
 
 - Before applying any playbook, always run a dry-run first to validate it against all hosts:
