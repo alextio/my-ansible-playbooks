@@ -23,6 +23,7 @@ Current playbooks:
 - `playbooks/macos/sync.yaml` — deploys macOS-specific config to `[local]` hosts (e.g. `hidutil` key-remapping LaunchAgent at `~/Library/LaunchAgents/com.local.KeyRemapping.plist`)
 
 - `playbooks/claude-code/sync.yml` — runs `roles/claude_code`: deploys global `~/.claude/CLAUDE.md` and installs or updates Claude Code; defaults to `all:!proxy`
+- `playbooks/pi/sync.yml` — runs `roles/pi`: installs the Pi coding agent (`pi`) as a global npm package under nvm's Node.js; the role depends on `nodejs` (`roles/pi/meta/main.yml`), so Node is set up first; defaults to `localhost`; version pinned in `roles/pi/defaults/main.yml`
 - `playbooks/docker/sync.yml` — runs `roles/docker`: sets up rootless Docker with NVIDIA GPU support; defaults to `all:!proxy`; assumes prerequisites (uidmap, nvidia-container-toolkit) are already installed system-wide
 - `playbooks/nodejs/sync.yml` — runs `roles/nodejs`: installs NVM, Node.js versions, a default version and global npm packages (all in `roles/nodejs/defaults/main.yml`); defaults to `all:!proxy`
 - `playbooks/go/sync.yml` — runs `roles/go`: installs Go to `~/.local/go`; symlinks `go`/`gofmt` into `~/.local/bin`; version pinned in `roles/go/defaults/main.yml`
@@ -32,6 +33,7 @@ Current playbooks:
 - `playbooks/podman/sync.yml` — deploys the Podman machine (VM) config and starts enabled `containers/<service>/` container services on `localhost`; see `playbooks/podman/vm/` (VM config templates) and `playbooks/podman/containers/forward-proxy/` (egress-filtering forward proxy, example service)
 - `playbooks/k3s-argocd/sync.yaml` — bootstraps a single k3s server (traefik and servicelb disabled) via the `k3s.orchestration` roles on `[k3s_server]` and installs Argo CD with `kubernetes.core.helm` only if it isn't already running (after bootstrap, Argo CD manages itself from `03-argocd-kubernetes`, so later runs leave it alone); **requires sudo** on the target. k3s, Helm and argo-cd chart versions pinned in `vars.yml`
 - `playbooks/k3s-argocd/secrets.yaml` — creates Kubernetes Secrets (and their namespaces) on an existing cluster from vault variables named `<namespace>__<secret-name>` in `group_vars/k3s_server/vault.yml`; **requires sudo**; see `group_vars/k3s_server/CLAUDE.md`
+- `playbooks/t3code/sync.yml` — runs `roles/t3code`: installs the T3 Code CLI (`t3`) via the official install script (release unpacked under `~/.t3/runtime/versions/`, `t3` linked into `~/.local/bin`), then includes the provider roles listed in `t3_providers` (currently `claude_code` and `pi`); defaults to `localhost`; t3 version and provider list in `roles/t3code/defaults/main.yml`. Logging in to providers is manual
 
 Planned: `playbooks/vim/`
 
@@ -44,9 +46,9 @@ Install-a-tool playbooks are roles: the tasks live in `roles/<name>/` (on `roles
 - Use snake_case role names (`claude_code`, `podman_docker`).
 - User-editable settings (pinned versions, package lists) go in `roles/<name>/defaults/main.yml` instead of a playbook `vars.yml`, so every playbook that includes the role sees them. Values derived from them (download URLs, arch names) go in `roles/<name>/vars/main.yml`.
 - Templates go in `roles/<name>/templates/`.
-- When a role needs another one first, list it in `roles/<name>/meta/main.yml`.
+- When a role needs another one first, list it in `roles/<name>/meta/main.yml` (e.g. `pi` depends on `nodejs`).
 
-Current roles: `bws`, `claude_code`, `docker`, `gh`, `go`, `nodejs`, `podman_docker`, `uv`.
+Current roles: `bws`, `claude_code`, `docker`, `gh`, `go`, `nodejs`, `pi`, `podman_docker`, `t3code`, `uv`.
 
 ## Inventory File vs group_vars
 

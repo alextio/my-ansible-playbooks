@@ -1,0 +1,11 @@
+---
+# Pinned t3 release (https://github.com/pingdotgg/t3code/releases). Bump to update.
+t3_version: "0.1.11"
+
+# Provider CLIs to set up after t3, by role name under roles/. Each role also has its
+# own playbook (./run.sh claude-code, ./run.sh pi). Logging in is manual:
+#   claude_code: claude auth login
+#   pi:          run `pi`, then /login (also runs the nodejs role first)
+t3_providers:
+  - claude_code
+  - pi

@@ -41,7 +41,9 @@ All server details which Ansible uses are stored in `inventory.ini`
 | `go`     | Installs Go to `~/.local/go` | Remote servers |
 | `nodejs` | Installs NVM and Node.js | Remote servers |
 | `claude-code` | Deploys global `~/.claude/CLAUDE.md` and installs Claude Code | Remote servers |
+| `pi` | Installs the Pi coding agent (`pi`) via npm, after Node.js | Local machine |
 | `podman` | Configures the Podman machine (VM) and container services (e.g. an egress-filtering forward proxy) | Local machine |
+| `t3code` | Installs the T3 Code CLI (`t3`) to `~/.local/bin`, plus the provider CLIs listed in `roles/t3code/defaults/main.yml` | Local machine (`-e target_hosts=<group>` for remote) |
 
 ## Prerequisites
 

@@ -1,0 +1,7 @@
+---
+# Pinned Pi coding agent release (npm: @earendil-works/pi-coding-agent). Bump to
+# update. T3 Code supports Pi 0.84.3 or newer.
+pi_package: "@earendil-works/pi-coding-agent"
+pi_version: "1.6.0"
+# The package's engines field requires this Node.js version or newer.
+pi_node_min_version: "22.19.0"

@@ -1,0 +1,4 @@
+---
+# Pi runs on nvm's Node.js, so set that up first.
+dependencies:
+  - role: nodejs
